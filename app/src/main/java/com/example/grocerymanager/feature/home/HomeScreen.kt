@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -154,13 +155,9 @@ fun HomeScreen(
                 contentPadding = PaddingValues(
                     start = AppSizing.ScreenEdgeHorizontal,
                     end = AppSizing.ScreenEdgeHorizontal,
-                    top = AppSpacing.xs,
-                    // Bottom clearance for the extended FAB. The
-                    // breathing-glow FAB is ~58dp tall with a 24dp glow
-                    // halo, plus the default 16dp FAB-to-navbar inset.
-                    // We reserve 104dp so the FAB never covers the last
-                    // purchase card or the top-category section.
-                    bottom = 104.dp,
+                    top = AppSpacing.sm, // Slightly increased top spacing for breathing room
+                    // Bottom clearance for the extended FAB. Increased to 120dp for premium breathing space.
+                    bottom = 120.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(AppSpacing.md),
             ) {
@@ -233,15 +230,18 @@ fun HomeScreen(
                             daysLeft = status2.daysLeft,
                             currencyCode = state.currencyCode,
                             onClick = onOpenBudget,
+                            modifier = Modifier.staggeredEntry(3), // Added staggered entry
                         )
                     }
                 } else {
                     item(key = "budget-cta") {
                         GroceryCard(
                             onClick = onOpenBudget,
-                            modifier = Modifier.semantics {
-                                contentDescription = "Set a monthly budget"
-                            },
+                            modifier = Modifier
+                                .staggeredEntry(3)
+                                .semantics {
+                                    contentDescription = "Set a monthly budget"
+                                },
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -285,6 +285,7 @@ fun HomeScreen(
                             haptics.tap()
                             showAddItemSheet = true
                         },
+                        modifier = Modifier.staggeredEntry(4), // Added staggered entry
                     )
                 }
 
@@ -296,7 +297,9 @@ fun HomeScreen(
                     )
                     SectionHeader(
                         title = stringResource(R.string.home_recent_purchases),
-                        modifier = Modifier.semantics { contentDescription = cd },
+                        modifier = Modifier
+                            .staggeredEntry(5) // Added staggered entry
+                            .semantics { contentDescription = cd },
                         action = {
                             // "See all" lives in the section header row,
                             // not after the list — keeps the top-category
@@ -342,7 +345,7 @@ fun HomeScreen(
                             // matches the Records list-row convention so
                             // both screens read with the same hierarchy.
                             dateLabel = DateFormat.shortDate(purchase.purchase.purchaseDate),
-                            modifier = Modifier.staggeredEntry(3),
+                            modifier = Modifier.staggeredEntry(6), // Adjusted index for smooth flow
                             onClick = {
                                 haptics.tap()
                                 onOpenPurchase(purchase.purchase.id)
@@ -355,7 +358,10 @@ fun HomeScreen(
                 val top = state.topCategory
                 if (top != null) {
                     item(key = "top-category-header") {
-                        SectionHeader(title = stringResource(R.string.home_top_category))
+                        SectionHeader(
+                            title = stringResource(R.string.home_top_category),
+                            modifier = Modifier.staggeredEntry(7) // Added staggered entry
+                        )
                     }
                     item(key = "top-category-card") {
                         TopCategoryCard(
@@ -365,6 +371,7 @@ fun HomeScreen(
                             amount = top.total,
                             percent = top.percent,
                             currencyCode = state.currencyCode,
+                            modifier = Modifier.staggeredEntry(8) // Added staggered entry
                         )
                     }
                 }
@@ -395,9 +402,12 @@ internal fun GreetingHeader(greeting: Greeting, modifier: Modifier = Modifier) {
     Column(modifier = modifier) {
         Text(
             text = text,
-            style = MaterialTheme.typography.headlineLarge,
+            style = MaterialTheme.typography.headlineLarge.copy(
+                fontWeight = FontWeight.ExtraBold // Made greeting extra bold for premium hierarchy
+            ),
             color = MaterialTheme.colorScheme.onBackground,
         )
+        Spacer(Modifier.height(AppSpacing.xxs)) // Added small spacer for clean look
         Text(
             stringResource(R.string.home_subtitle),
             style = MaterialTheme.typography.bodyMedium,
@@ -410,13 +420,17 @@ internal fun GreetingHeader(greeting: Greeting, modifier: Modifier = Modifier) {
 internal fun QuickActionsGrid(
     onOpenShoppingList: () -> Unit,
     onAddItem: () -> Unit,
+    modifier: Modifier = Modifier, // Added modifier parameter
 ) {
     val shoppingListLabel = stringResource(R.string.home_quick_shopping_list)
     val shoppingListCd = stringResource(R.string.home_quick_shopping_list_cd)
     val addItemLabel = stringResource(R.string.home_quick_add_item)
     val addItemCd = stringResource(R.string.home_quick_add_item_cd)
 
-    Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)) {
+    Column(
+        modifier = modifier, // Applied modifier
+        verticalArrangement = Arrangement.spacedBy(AppSpacing.xs)
+    ) {
         SectionHeader(title = stringResource(R.string.home_quick_actions))
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -454,7 +468,7 @@ private fun QuickActionTile(
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val pressScale by animateFloatAsState(
-        targetValue = if (isPressed) 0.97f else 1f,
+        targetValue = if (isPressed) 0.96f else 1f, // Slightly increased press scale
         animationSpec = tween(MotionDuration.Short, easing = AppEasing.Standard),
         label = "quick-tile-press",
     )
@@ -465,6 +479,7 @@ private fun QuickActionTile(
             vertical = AppSpacing.md + AppSpacing.xs,
         ),
         modifier = modifier
+            .scale(pressScale) // Added scale modifier
             .semantics { this.contentDescription = contentDescription },
     ) {
         Column(
@@ -500,13 +515,16 @@ internal fun TopCategoryCard(
     amount: MinorUnits,
     percent: Float,
     currencyCode: String,
+    modifier: Modifier = Modifier // Added modifier parameter
 ) {
     val safePercent = percent.coerceIn(0f, 1f)
     val percentInt = (safePercent * 100f).toInt()
     val amountText = MoneyUtils.formatCompact(amount, currencyCode)
     val subtitle = stringResource(R.string.home_top_category_subtitle, name)
 
-    GlassCard {
+    GlassCard(
+        modifier = modifier // Applied modifier
+    ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(AppSpacing.sm),
