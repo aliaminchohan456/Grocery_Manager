@@ -23,31 +23,23 @@ import com.example.grocerymanager.core.preferences.ThemeMode
 
 /**
  * Centralized premium design-system color scheme.
- *
- * The fields exposed here are what every screen reads through
- * [AppTheme.colors]. Adding a new color token = adding a field here and a
- * mapping in [lightAppColors] / [darkAppColors].
  */
 data class AppColorScheme(
-    // Brand
     val brand: Color,
     val brandDark: Color,
     val brandDeep: Color,
     val fresh: Color,
     val navy: Color,
 
-    // Text
     val mutedText: Color,
     val onSurfaceFaint: Color,
     val onSurfaceDisabled: Color,
 
-    // Status
     val warning: Color,
     val warningDark: Color,
     val overBudget: Color,
     val success: Color,
 
-    // Surfaces
     val surfaceVariant: Color,
     val surfaceMint: Color,
     val surfaceGreenSoft: Color,
@@ -61,26 +53,21 @@ data class AppColorScheme(
     val surfaceIndigoSoft: Color,
     val surfaceSelected: Color,
 
-    // Lines / borders
     val outline: Color,
     val outlineStrong: Color,
 
-    // Containers
     val primaryContainer: Color,
     val onPrimaryContainer: Color,
     val onAccent: Color,
 
-    // On-surface roles
     val onSurfaceMuted: Color,
     val onBackground: Color,
 
-    // Surfaces
     val background: Color,
     val surface: Color,
     val elevatedCard: Color,
     val inputSurface: Color,
 
-    // Premium soft accent surfaces (used for selected states).
     val accentSurface: Color,
     val accentSurfaceStrong: Color,
 )
@@ -136,7 +123,7 @@ fun darkAppColors(): AppColorScheme = AppColorScheme(
     brandDark = BrandColors.FreshGreenDark,
     brandDeep = BrandColors.FreshGreenDark,
     fresh = BrandColors.FreshGreen,
-    navy = DarkTokens.OnSurface,
+    navy = DarkTokens.OnSurface, // Changed to use neutral dark instead of navy
     mutedText = DarkTokens.OnSurfaceMuted,
     onSurfaceFaint = DarkTokens.OnSurfaceFaint,
     onSurfaceDisabled = Color(0xFF526071),
@@ -147,14 +134,15 @@ fun darkAppColors(): AppColorScheme = AppColorScheme(
     surfaceVariant = DarkTokens.MatteSlate,
     surfaceMint = DarkTokens.SurfaceSelectedMint,
     surfaceGreenSoft = DarkTokens.SurfaceGreen18,
-    surfaceOrangeSoft = Color(0xFF2A1F12),
-    surfaceRedSoft = Color(0xFF2C1419),
-    surfacePurpleSoft = Color(0xFF1F1A30),
-    surfaceBlueSoft = Color(0xFF122230),
-    surfaceGraySoft = Color(0xFF1B2333),
-    surfaceTealSoft = Color(0xFF112B2A),
-    surfacePinkSoft = Color(0xFF2A1424),
-    surfaceIndigoSoft = Color(0xFF1A1B30),
+    // Updated soft surfaces to match the neutral dark gray scale instead of blue tints
+    surfaceOrangeSoft = Color(0xFF3A2E1C),
+    surfaceRedSoft = Color(0xFF3A1C20),
+    surfacePurpleSoft = Color(0xFF2A2435),
+    surfaceBlueSoft = Color(0xFF1C2A33),
+    surfaceGraySoft = Color(0xFF2C2C2E),
+    surfaceTealSoft = Color(0xFF1C3331),
+    surfacePinkSoft = Color(0xFF33202A),
+    surfaceIndigoSoft = Color(0xFF232538),
     surfaceSelected = DarkTokens.SurfaceSelectedMint,
     outline = DarkTokens.Outline,
     outlineStrong = DarkTokens.OutlineVariant,
@@ -246,7 +234,7 @@ fun GroceryManagerTheme(
     val appColors = if (resolvedDark) darkAppColors() else lightAppColors()
 
     val isOled = themeMode == ThemeMode.Oled ||
-        (themeMode == ThemeMode.System && resolvedDark && oledBlack)
+            (themeMode == ThemeMode.System && resolvedDark && oledBlack)
     val materialColorScheme = if (isOled) OledMaterial else baseMaterial
     val finalAppColors = if (isOled) {
         appColors.copy(
