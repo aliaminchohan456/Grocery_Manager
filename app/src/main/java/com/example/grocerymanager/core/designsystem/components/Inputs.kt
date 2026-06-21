@@ -1,5 +1,16 @@
 package com.example.grocerymanager.core.designsystem.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,6 +50,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
@@ -78,19 +90,35 @@ private fun PremiumFieldColors(
     )
 }
 
+// Premium Animated Border Modifier
 @Composable
 private fun Modifier.fieldBorder(
+    isFocused: Boolean,
     isError: Boolean,
     borderColor: Color?,
 ): Modifier {
-    val color = when {
+    val targetColor = when {
         isError -> AppTheme.colors.overBudget
-        borderColor != null -> borderColor
-        else -> AppTheme.colors.outline.copy(alpha = 0.6f)
+        isFocused -> borderColor ?: AppTheme.colors.brand
+        else -> AppTheme.colors.outline.copy(alpha = 0.4f)
     }
+
+    val targetWidth = if (isFocused) 1.5.dp else 1.dp
+
+    val animatedColor by animateColorAsState(
+        targetValue = targetColor,
+        animationSpec = tween(300),
+        label = "borderColor"
+    )
+    val animatedWidth by animateDpAsState(
+        targetValue = targetWidth,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label = "borderWidth"
+    )
+
     return this.border(
-        width = 1.dp,
-        color = color,
+        width = animatedWidth,
+        color = animatedColor,
         shape = AppShapes.Input,
     )
 }
@@ -107,15 +135,18 @@ fun AmountInputField(
     keyboardOptions: KeyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
     borderColor: Color? = null,
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+
     TextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
             .height(AppSizing.InputHeight)
-            .fieldBorder(isError, borderColor),
+            .onFocusChanged { isFocused = it.isFocused }
+            .fieldBorder(isFocused, isError, borderColor),
         label = { Text(label) },
-        leadingIcon = currencySymbol?.let { { Text(it, style = MaterialTheme.typography.titleMedium) } },
+        leadingIcon = currencySymbol?.let { { Text(it, style = MaterialTheme.typography.titleMedium, color = if (isFocused) AppTheme.colors.brand else AppTheme.colors.onSurfaceMuted) } },
         singleLine = true,
         enabled = enabled,
         isError = isError,
@@ -134,13 +165,16 @@ fun QuantityInputField(
     label: String = "Quantity",
     enabled: Boolean = true,
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+
     TextField(
         value = value,
         onValueChange = onValueChange,
         modifier = modifier
             .fillMaxWidth()
             .height(AppSizing.InputHeight)
-            .fieldBorder(isError = false, borderColor = null),
+            .onFocusChanged { isFocused = it.isFocused }
+            .fieldBorder(isFocused, isError = false, borderColor = null),
         label = { Text(label) },
         singleLine = true,
         enabled = enabled,
@@ -168,14 +202,19 @@ fun TextInputField(
     focusRequester: FocusRequester? = null,
     onFocusChanged: ((Boolean) -> Unit)? = null,
 ) {
+    var isFocusedInternal by remember { mutableStateOf(false) }
+
     val baseModifier = modifier
         .fillMaxWidth()
-        .fieldBorder(isError, null)
         .let {
-            it
-                .let { m -> if (focusRequester != null) m.focusRequester(focusRequester) else m }
-                .let { m -> if (onFocusChanged != null) m.onFocusChanged { focusState -> onFocusChanged(focusState.isFocused) } else m }
+            it.let { m -> if (focusRequester != null) m.focusRequester(focusRequester) else m }
         }
+        .onFocusChanged { focusState ->
+            isFocusedInternal = focusState.isFocused
+            onFocusChanged?.invoke(focusState.isFocused)
+        }
+        .fieldBorder(isFocusedInternal, isError, null)
+
     TextField(
         value = value,
         onValueChange = onValueChange,
@@ -193,13 +232,6 @@ fun TextInputField(
     )
 }
 
-/**
- * Shop-name input with a one-tap autocomplete list of previously used shop
- * names shown below the field while it has focus. Suggestions come from
- * `PurchaseRepository.observeShopNames()` and are filtered case-insensitively
- * against the current value (an exact-case match is hidden so the user is
- * never offered what they already typed verbatim).
- */
 @Composable
 fun ShopNameField(
     value: String,
@@ -220,7 +252,7 @@ fun ShopNameField(
         } else {
             suggestions.filter { candidate ->
                 candidate.contains(query, ignoreCase = true) &&
-                    !candidate.equals(query, ignoreCase = true)
+                        !candidate.equals(query, ignoreCase = true)
             }
         }
     }
@@ -236,41 +268,46 @@ fun ShopNameField(
             keyboardOptions = keyboardOptions,
             onFocusChanged = { focused -> isFocused = focused },
         )
-        if (showDropdown) {
-            Spacer(Modifier.height(6.dp))
-            Surface(
-                shape = AppShapes.Input,
-                color = AppTheme.colors.elevatedCard,
-                tonalElevation = 2.dp,
-                shadowElevation = 4.dp,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .heightIn(max = 220.dp)
-                        .fillMaxWidth(),
+
+        // Premium Smooth Expanding Dropdown
+        AnimatedVisibility(
+            visible = showDropdown,
+            enter = expandVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeIn(),
+            exit = shrinkVertically(spring(stiffness = Spring.StiffnessMediumLow)) + fadeOut()
+        ) {
+            Column {
+                Spacer(Modifier.height(6.dp))
+                Surface(
+                    shape = AppShapes.Input,
+                    color = AppTheme.colors.elevatedCard,
+                    tonalElevation = 2.dp,
+                    shadowElevation = 8.dp, // Thora zyada shadow for floating feel
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    if (filtered.isEmpty()) {
-                        // Field has text but no matches; offer a quiet hint
-                        // so the user knows the dropdown is empty because
-                        // nothing matched, not because the data is missing.
-                        if (noSuggestionsLabel != null) {
-                            Text(
-                                text = noSuggestionsLabel,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = AppTheme.colors.onSurfaceMuted,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-                            )
-                        }
-                    } else {
-                        filtered.forEach { suggestion ->
-                            ShopSuggestionRow(
-                                name = suggestion,
-                                onClick = {
-                                    onValueChange(suggestion)
-                                    isFocused = false
-                                },
-                            )
+                    Column(
+                        modifier = Modifier
+                            .heightIn(max = 220.dp)
+                            .fillMaxWidth(),
+                    ) {
+                        if (filtered.isEmpty()) {
+                            if (noSuggestionsLabel != null) {
+                                Text(
+                                    text = noSuggestionsLabel,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = AppTheme.colors.onSurfaceMuted,
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+                                )
+                            }
+                        } else {
+                            filtered.forEach { suggestion ->
+                                ShopSuggestionRow(
+                                    name = suggestion,
+                                    onClick = {
+                                        onValueChange(suggestion)
+                                        isFocused = false
+                                    },
+                                )
+                            }
                         }
                     }
                 }
@@ -288,13 +325,13 @@ private fun ShopSuggestionRow(
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp), // Thori zyada padding touch target k liye
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Icon(
             imageVector = AppIcons.Store,
             contentDescription = null,
-            tint = AppTheme.colors.onSurfaceMuted,
+            tint = AppTheme.colors.brand, // Brand color for icon in dropdown
             modifier = Modifier.size(18.dp),
         )
         Spacer(Modifier.size(12.dp))
@@ -315,13 +352,16 @@ fun PremiumSearchField(
     modifier: Modifier = Modifier,
     placeholder: String = "Search",
 ) {
+    var isFocused by remember { mutableStateOf(false) }
+
     TextField(
         value = query,
         onValueChange = onQueryChange,
         modifier = modifier
             .fillMaxWidth()
             .height(AppSizing.SearchBarHeight)
-            .fieldBorder(isError = false, null),
+            .onFocusChanged { isFocused = it.isFocused }
+            .fieldBorder(isFocused, isError = false, null),
         placeholder = { Text(placeholder) },
         leadingIcon = { Icon(AppIcons.Search, contentDescription = null) },
         trailingIcon = if (query.isNotEmpty()) {
@@ -347,6 +387,8 @@ fun DatePickerField(
     modifier: Modifier = Modifier,
     label: String = "Date",
 ) {
+    var isPressed by remember { mutableStateOf(false) } // Visual feedback
+
     Box(modifier = modifier.fillMaxWidth()) {
         TextField(
             value = value,
@@ -354,9 +396,9 @@ fun DatePickerField(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(AppSizing.InputHeight)
-                .fieldBorder(isError = false, null),
+                .fieldBorder(isFocused = isPressed, isError = false, null),
             label = { Text(label) },
-            leadingIcon = { Icon(AppIcons.Calendar, contentDescription = null) },
+            leadingIcon = { Icon(AppIcons.Calendar, contentDescription = null, tint = AppTheme.colors.brand) }, // Pop of brand color
             enabled = false,
             shape = AppShapes.Input,
             colors = PremiumFieldColors(),
@@ -365,7 +407,12 @@ fun DatePickerField(
             androidx.compose.foundation.layout.Box(
                 modifier = Modifier
                     .matchParentSize()
-                    .clickable(onClick = onClick),
+                    .clickable {
+                        isPressed = true
+                        onClick()
+                        // Simulate quick release
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ isPressed = false }, 150)
+                    },
             )
         }
     }
@@ -379,25 +426,24 @@ fun CategoryChip(
     modifier: Modifier = Modifier,
     leadingIcon: ImageVector? = null,
 ) {
-    // Premium selected state: instead of a flat tinted pill, the selected
-    // chip reads as frosted glass — a 15% white fill with a soft inner
-    // brand glow + hairline border, so the active filter looks "lit".
-    val container = if (selected) {
-        Color.White.copy(alpha = 0.15f)
-    } else {
-        AppTheme.colors.elevatedCard
-    }
-    val borderColor = if (selected) {
-        AppTheme.colors.brand.copy(alpha = 0.5f)
-    } else {
-        AppTheme.colors.outline
-    }
-    val content = if (selected) AppTheme.colors.brand else AppTheme.colors.onSurfaceMuted
+    val targetContainer = if (selected) Color.White.copy(alpha = 0.15f) else AppTheme.colors.elevatedCard
+    val targetBorderColor = if (selected) AppTheme.colors.brand.copy(alpha = 0.5f) else AppTheme.colors.outline
+    val targetContent = if (selected) AppTheme.colors.brand else AppTheme.colors.onSurfaceMuted
+    val targetScale = if (selected) 1.05f else 1f
+
+    // Premium Animated Transitions
+    val containerColor by animateColorAsState(targetContainer, tween(200))
+    val borderColor by animateColorAsState(targetBorderColor, tween(200))
+    val contentColor by animateColorAsState(targetContent, tween(200))
+    val scale by animateFloatAsState(targetScale, spring(dampingRatio = Spring.DampingRatioMediumBouncy))
+
     Row(
         modifier = modifier
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
             .then(
-                // Selected chip gets a soft brand-tinted glow so the frosted
-                // glass looks like it is emitting light.
                 if (selected) {
                     Modifier.shadow(
                         elevation = 8.dp,
@@ -406,11 +452,9 @@ fun CategoryChip(
                         ambientColor = AppTheme.colors.brand.copy(alpha = 0.25f),
                         spotColor = AppTheme.colors.brand.copy(alpha = 0.35f),
                     )
-                } else {
-                    Modifier
-                },
+                } else Modifier
             )
-            .background(container, AppShapes.Chip)
+            .background(containerColor, AppShapes.Chip)
             .border(1.dp, borderColor, AppShapes.Chip)
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 9.dp),
@@ -420,7 +464,7 @@ fun CategoryChip(
             Icon(
                 imageVector = leadingIcon,
                 contentDescription = null,
-                tint = content,
+                tint = contentColor,
                 modifier = Modifier.size(16.dp),
             )
             Spacer(Modifier.size(6.dp))
@@ -428,7 +472,7 @@ fun CategoryChip(
         Text(
             text = label,
             style = MaterialTheme.typography.labelLarge,
-            color = content,
+            color = contentColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
@@ -443,7 +487,7 @@ fun FilterChipRow(
 ) {
     LazyRow(
         modifier = modifier.fillMaxWidth(),
-        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 2.dp),
+        contentPadding = PaddingValues(horizontal = 4.dp, vertical = 4.dp), // Thori breathing room shadows k liye
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         items(
