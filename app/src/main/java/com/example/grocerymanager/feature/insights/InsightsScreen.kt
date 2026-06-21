@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -54,7 +53,6 @@ import com.example.grocerymanager.core.designsystem.theme.AppSizing
 import com.example.grocerymanager.core.designsystem.theme.AppSpacing
 import com.example.grocerymanager.core.designsystem.theme.AppTheme
 import com.example.grocerymanager.core.designsystem.theme.CardPadding
-import com.example.grocerymanager.core.designsystem.typography.AmountHero
 import com.example.grocerymanager.core.designsystem.typography.Eyebrow
 
 @Composable
@@ -98,20 +96,23 @@ fun InsightsScreen(
                         start = AppSizing.ScreenEdgeHorizontal,
                         end = AppSizing.ScreenEdgeHorizontal,
                         top = AppSpacing.sm,
-                        bottom = AppSizing.BottomNavHeight + AppSpacing.xl,
+                        bottom = AppSizing.BottomNavHeight + AppSpacing.xl + 16.dp, // Extra breathing room
                     ),
                     verticalArrangement = Arrangement.spacedBy(AppSpacing.md),
                 ) {
+                    var index = 0 // Index for staggered animations
+
                     item {
-                        // Editorial eyebrow + page title.
                         InsightsPageHeader(
-                            modifier = Modifier.staggeredEntry(0),
+                            modifier = Modifier.staggeredEntry(index++),
                         )
                     }
 
                     item {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .staggeredEntry(index++),
                             horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
                         ) {
                             InsightCard(
@@ -136,14 +137,16 @@ fun InsightsScreen(
 
                     if (state.monthlyTotals.isNotEmpty()) {
                         item {
-                            SectionHeader(title = stringResource(R.string.insights_trend_section))
+                            SectionHeader(
+                                title = stringResource(R.string.insights_trend_section),
+                                modifier = Modifier.staggeredEntry(index++)
+                            )
                         }
                         item {
-                            // GlassCard — Double-Bezel premium treatment.
-                            GlassCard {
+                            GlassCard(
+                                modifier = Modifier.staggeredEntry(index++)
+                            ) {
                                 Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
-                                    // Chip removed — the trend chart speaks
-                                    // for itself inside the card.
                                     val ordered = remember(state.monthlyTotals) {
                                         state.monthlyTotals.reversed()
                                     }
@@ -161,13 +164,16 @@ fun InsightsScreen(
 
                     if (state.categorySlices.isNotEmpty()) {
                         item {
-                            SectionHeader(title = stringResource(R.string.insights_categories_section))
+                            SectionHeader(
+                                title = stringResource(R.string.insights_categories_section),
+                                modifier = Modifier.staggeredEntry(index++)
+                            )
                         }
                         item {
-                            GlassCard {
+                            GlassCard(
+                                modifier = Modifier.staggeredEntry(index++)
+                            ) {
                                 Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.md)) {
-                                    // Chip removed — the donut + legend
-                                    // communicates the breakdown directly.
                                     DonutChartCard(slices = state.categorySlices)
                                 }
                             }
@@ -180,13 +186,17 @@ fun InsightsScreen(
                                 total = slice.total,
                                 percent = slice.percent,
                                 currencyCode = state.currencyCode,
+                                modifier = Modifier.staggeredEntry(index++)
                             )
                         }
                     }
 
                     if (state.topItems.isNotEmpty()) {
                         item {
-                            SectionHeader(title = stringResource(R.string.insights_top_items_section))
+                            SectionHeader(
+                                title = stringResource(R.string.insights_top_items_section),
+                                modifier = Modifier.staggeredEntry(index++)
+                            )
                         }
                         items(state.topItems, key = { it.item.itemName }) { share ->
                             val item = share.item
@@ -211,6 +221,7 @@ fun InsightsScreen(
                                     haptics.tap()
                                 },
                                 enabled = true,
+                                modifier = Modifier.staggeredEntry(index++)
                             )
                         }
                     }
@@ -222,10 +233,11 @@ fun InsightsScreen(
 
 @Composable
 private fun InsightsPageHeader(modifier: Modifier = Modifier) {
-    // Chip removed — the page now leads straight into the title.
     Text(
         text = stringResource(R.string.insights_categories_section),
-        style = MaterialTheme.typography.headlineLarge,
+        style = MaterialTheme.typography.headlineLarge.copy(
+            fontWeight = FontWeight.ExtraBold // Premium hierarchy
+        ),
         color = AppTheme.colors.onBackground,
         modifier = modifier.fillMaxWidth(),
     )
@@ -253,9 +265,6 @@ private fun DonutChartCard(slices: List<CategorySlice>) {
             diameter = 180.dp,
             strokeWidth = 20.dp,
         ) {
-            // Explicit centering Box guarantees the content is optically
-            // pinned to the donut's centre, even when the category name
-            // or percentage text is long enough to push the layout.
             Box(contentAlignment = Alignment.Center) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -278,9 +287,6 @@ private fun DonutChartCard(slices: List<CategorySlice>) {
                         )
                         Text(
                             text = DateFormat.formatPercent(top.percent, signed = false),
-                            // HeadlineSmall (24sp) fits comfortably inside the
-                            // 140dp donut hole; AmountHero (40sp) was too large
-                            // and caused the "Top" label to float off-centre.
                             style = MaterialTheme.typography.headlineSmall.copy(
                                 fontWeight = FontWeight.Bold,
                             ),
@@ -343,8 +349,12 @@ private fun CategorySliceListItem(
     total: Long,
     percent: Float,
     currencyCode: String,
+    modifier: Modifier = Modifier
 ) {
-    GroceryCard(cardPadding = CardPadding.Standard) {
+    GroceryCard(
+        cardPadding = CardPadding.Standard,
+        modifier = modifier // Applied staggered modifier
+    ) {
         Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -370,9 +380,6 @@ private fun CategorySliceListItem(
                     softWrap = false,
                 )
             }
-            // Glowing progress bar replaces the flat PremiumProgressBar
-            // — the share line emits a soft glow on dark themes.
-            // Height bumped to 6dp so the track is clearly visible.
             GlowingProgressBar(
                 progress = percent.coerceIn(0f, 1f),
                 height = 6.dp,

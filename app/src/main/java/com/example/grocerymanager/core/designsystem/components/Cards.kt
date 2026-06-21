@@ -8,7 +8,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,19 +15,15 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -55,14 +50,12 @@ import androidx.compose.ui.unit.dp
 import com.example.grocerymanager.R
 import com.example.grocerymanager.core.designsystem.color.BrandColors
 import com.example.grocerymanager.core.designsystem.icons.AppIcons
-import com.example.grocerymanager.core.designsystem.theme.AppColorScheme
 import com.example.grocerymanager.core.designsystem.theme.AppShapes
 import com.example.grocerymanager.core.designsystem.theme.AppSpacing
 import com.example.grocerymanager.core.designsystem.theme.AppTheme
 import com.example.grocerymanager.core.designsystem.theme.CardPadding
 import com.example.grocerymanager.core.designsystem.theme.isLight
 import com.example.grocerymanager.core.designsystem.typography.AmountHero
-import com.example.grocerymanager.core.designsystem.typography.AmountHeroLarge
 import kotlin.math.absoluteValue
 
 // Hoisted to module scope so the brushes are only allocated once.
@@ -82,8 +75,8 @@ private val HeroDarkGradient: Brush = Brush.linearGradient(
 
 private val DarkGlassGradient: Brush = Brush.linearGradient(
     colors = listOf(
-        Color(0xFF111827),
-        Color(0xFF0B1220),
+        Color(0xFF1C1C1E), // Updated to match Apple dark tokens
+        Color(0xFF121214),
     ),
 )
 
@@ -91,16 +84,9 @@ private val DarkGlassGradient: Brush = Brush.linearGradient(
  * Premium card surface — refined, soft-shadow in light mode, hairline border
  * in dark mode so the card never disappears into the background.
  *
- * Phase 2 polish: the shadow is now a **double-pass soft drop** — one
- * ambient layer (1.5dp @ 5% black) and one spot layer (4dp @ 7% black) —
- * so the card reads as floating just above the surface with a diffused
- * halo rather than the previous 1dp "postage stamp" shadow. The wider
- * shadow spread is what gives the list its "expensive" depth.
- *
- * Supports [onLongClick] for multi-select patterns (e.g. CategoryDetail
- * item tiles). When [onLongClick] is non-null, the click handling is moved
- * from `Surface.onClick` to a `combinedClickable` modifier so the ripple
- * fires consistently for both gestures.
+ * Polish: The shadow is now an "Optical Illusion" double-pass.
+ * Light Mode uses a wider, softer dark shadow (like floating paper).
+ * Dark Mode uses a pure black shadow to create 3D depth.
  */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -119,49 +105,38 @@ fun GroceryCard(
     val isLight = AppTheme.colors.isLight()
     val useGlass = glass && !isLight
 
-    // Resolved shadow elevation: glass / bordered / selected overrides win
-    // so the card never has a "double chrome" (shadow + border + glass).
     val resolvedElevation = when {
         useGlass -> 16.dp
         bordered || selected -> 0.dp
         else -> elevation
     }
 
-    // The premium shadow is a **double-pass** so the card reads as "softly
-    // floating" rather than "stamped onto" the background:
-    //   - pass 1 (ambient): wide, very low alpha — creates the diffuse halo
-    //   - pass 2 (spot):    tighter, slightly stronger — anchors the edge
-    // We compose both with `.shadow().shadow()` so the alphas stack
-    // additively without a single over-saturated drop. The ambient pass
-    // uses a low elevation + larger alpha; the spot pass uses a higher
-    // elevation + lower alpha.
+    // The premium shadow double-pass for ultimate depth perception
     val baseModifier = modifier
         .fillMaxWidth()
         .shadow(
-            elevation = if (isLight) 2.dp else 0.dp,
+            elevation = if (isLight) 4.dp else 0.dp, // Wider ambient pass
+            shape = AppShapes.Card,
+            clip = false,
+            ambientColor = if (isLight) Color.Black.copy(alpha = 0.08f)
+            else if (useGlass) Color.Black.copy(alpha = 0.6f)
+            else Color.Black.copy(alpha = 0f),
+            spotColor = if (isLight) Color.Black.copy(alpha = 0.06f)
+            else if (useGlass) Color.Black.copy(alpha = 0.6f)
+            else Color.Black.copy(alpha = 0f),
+        )
+        .shadow(
+            elevation = resolvedElevation, // Tighter spot pass
             shape = AppShapes.Card,
             clip = false,
             ambientColor = if (isLight) Color.Black.copy(alpha = 0.05f)
-                else if (useGlass) Color.Black.copy(alpha = 0.5f)
-                else Color.Black.copy(alpha = 0f),
-            spotColor = if (isLight) Color.Black.copy(alpha = 0.04f)
-                else if (useGlass) Color.Black.copy(alpha = 0.5f)
-                else Color.Black.copy(alpha = 0f),
-        )
-        .shadow(
-            elevation = resolvedElevation,
-            shape = AppShapes.Card,
-            clip = false,
-            ambientColor = if (isLight) Color.Black.copy(alpha = 0.03f)
-                else if (useGlass) Color.Black.copy(alpha = 0.5f)
-                else Color.Black.copy(alpha = 0f),
-            spotColor = if (isLight) Color.Black.copy(alpha = 0.06f)
-                else if (useGlass) Color.Black.copy(alpha = 0.5f)
-                else Color.Black.copy(alpha = 0f),
+            else if (useGlass) Color.Black.copy(alpha = 0.5f)
+            else Color.Black.copy(alpha = 0f),
+            spotColor = if (isLight) Color.Black.copy(alpha = 0.08f)
+            else if (useGlass) Color.Black.copy(alpha = 0.5f)
+            else Color.Black.copy(alpha = 0f),
         )
 
-    // True glass: transparent fill + 1dp white hairline border + no solid
-    // background behind the content.
     val glassFill = if (useGlass) Color.White.copy(alpha = 0.03f) else background
     val glassBorder = if (useGlass) {
         1.dp to Color.White.copy(alpha = 0.08f)
@@ -205,8 +180,6 @@ fun GroceryCard(
         color = glassFill,
         contentColor = MaterialTheme.colorScheme.onSurface,
     ) {
-        // In true-glass mode, draw a subtle top-edge highlight so the card
-        // reads as a "machined glass plate" rather than a flat transparent box.
         if (useGlass) {
             Box {
                 Box(
@@ -233,11 +206,6 @@ fun GroceryCard(
     }
 }
 
-/**
- * Convenience overload that takes a [CardPadding] enum value instead of a
- * raw [PaddingValues]. Use this when the standard 3-padding system is
- * enough — it reads better at call sites that don't need bespoke padding.
- */
 @Composable
 fun GroceryCard(
     cardPadding: CardPadding,
@@ -265,7 +233,6 @@ fun GroceryCard(
 
 /**
  * Premium hero card with rich gradient and white text.
- * Use sparingly — at most one per screen.
  */
 @Composable
 fun HeroSummaryCard(
@@ -282,21 +249,22 @@ fun HeroSummaryCard(
     val onAccent = AppTheme.colors.onAccent
     val gradient = if (isLight) HeroLightGradient else HeroDarkGradient
 
+    // Softer, more diffused glow for Dribbble-level aesthetics
     val glowModifier = if (isLight) {
         Modifier.shadow(
-            elevation = 24.dp,
+            elevation = 28.dp,
             shape = AppShapes.HeroCard,
             clip = false,
-            ambientColor = BrandColors.HeroGlow.copy(alpha = 0.14f),
-            spotColor = BrandColors.HeroGlow.copy(alpha = 0.20f),
+            ambientColor = BrandColors.HeroGlow.copy(alpha = 0.18f),
+            spotColor = BrandColors.HeroGlow.copy(alpha = 0.25f),
         )
     } else {
         Modifier.shadow(
-            elevation = 18.dp,
+            elevation = 20.dp,
             shape = AppShapes.HeroCard,
             clip = false,
-            ambientColor = BrandColors.DarkHeroGlow.copy(alpha = 0.10f),
-            spotColor = BrandColors.DarkHeroGlow.copy(alpha = 0.16f),
+            ambientColor = BrandColors.DarkHeroGlow.copy(alpha = 0.12f),
+            spotColor = BrandColors.DarkHeroGlow.copy(alpha = 0.18f),
         )
     }
 
@@ -313,7 +281,6 @@ fun HeroSummaryCard(
                 .clip(AppShapes.HeroCard)
                 .background(gradient),
         ) {
-            // Subtle top highlight — adds depth without heavy overlay work.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -321,36 +288,25 @@ fun HeroSummaryCard(
                     .background(
                         Brush.verticalGradient(
                             colors = listOf(
-                                Color.White.copy(alpha = if (isLight) 0.10f else 0.06f),
+                                Color.White.copy(alpha = if (isLight) 0.12f else 0.08f),
                                 Color.Transparent,
                             ),
                         ),
                     ),
             )
-            // Grain / noise texture overlay — a faint, deterministic stipple
-            // drawn once and cached. It breaks up the flat emerald sweep so
-            // the hero reads as a real material surface (the "premium paper
-            // stock" register) rather than a flat CSS gradient. Uses
-            // BoxScope.matchParentSize() so the overlay sizes to the Box's
-            // final content size after measurement — Modifier.fillMaxSize()
-            // here would grab the parent's incoming maxHeight and inflate
-            // the hero card to fill its parent (e.g. RecordsScreen's
-            // fillMaxSize Column), making the green card stretch down the
-            // whole page instead of hugging its content.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .matchParentSize()
-                    .drawGrainOverlay(alpha = if (isLight) 0.05f else 0.06f),
+                    .drawGrainOverlay(alpha = if (isLight) 0.04f else 0.05f), // Subtle grain
             )
-            // Inner stroke for premium glass feel.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(AppShapes.HeroCard)
                     .border(
                         width = 0.5.dp,
-                        color = Color.White.copy(alpha = if (isLight) 0.10f else 0.14f),
+                        color = Color.White.copy(alpha = if (isLight) 0.12f else 0.16f),
                         shape = AppShapes.HeroCard,
                     ),
             )
@@ -359,8 +315,6 @@ fun HeroSummaryCard(
                     start = 22.dp,
                     end = 22.dp,
                     top = 22.dp,
-                    // Extra bottom breathing room so the subtitle never
-                    // kisses the bottom edge of the card.
                     bottom = 24.dp,
                 ),
                 verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -393,13 +347,10 @@ fun HeroSummaryCard(
                         )
                     }
                     if (badge != null) {
-                        // "10d left" pill — translucent white surface so
-                        // the chip reads as a label, not a CTA, against
-                        // the gradient.
                         Box(
                             modifier = Modifier
                                 .clip(AppShapes.Chip)
-                                .background(Color.White.copy(alpha = if (isLight) 0.18f else 0.14f))
+                                .background(Color.White.copy(alpha = if (isLight) 0.20f else 0.16f))
                                 .padding(horizontal = 10.dp, vertical = 4.dp),
                         ) {
                             Text(
@@ -417,7 +368,7 @@ fun HeroSummaryCard(
                     targetState = amount,
                     transitionSpec = {
                         (fadeIn(animationSpec = tween(220)) + slideInVertically { it / 4 }) togetherWith
-                            (fadeOut(animationSpec = tween(180)) + slideOutVertically { -it / 4 })
+                                (fadeOut(animationSpec = tween(180)) + slideOutVertically { -it / 4 })
                     },
                     label = "hero-amount",
                 ) { animAmount ->
@@ -460,8 +411,7 @@ fun HeroSummaryCard(
 }
 
 /**
- * Dark-glass hero card — used for screens where the green card would feel
- * heavy or repeated (e.g. dark-themed alternative hero).
+ * Dark-glass hero card.
  */
 @Composable
 fun GlassHeroCard(
@@ -476,11 +426,11 @@ fun GlassHeroCard(
         modifier = modifier
             .fillMaxWidth()
             .shadow(
-                elevation = 18.dp,
+                elevation = 20.dp,
                 shape = AppShapes.HeroCard,
                 clip = false,
-                ambientColor = BrandColors.DarkHeroGlow.copy(alpha = 0.10f),
-                spotColor = BrandColors.DarkHeroGlow.copy(alpha = 0.16f),
+                ambientColor = BrandColors.DarkHeroGlow.copy(alpha = 0.12f),
+                spotColor = BrandColors.DarkHeroGlow.copy(alpha = 0.18f),
             ),
         shape = AppShapes.HeroCard,
         color = Color.Transparent,
@@ -496,7 +446,6 @@ fun GlassHeroCard(
                     shape = AppShapes.HeroCard,
                 ),
         ) {
-            // Soft green glow accent.
             Box(
                 modifier = Modifier
                     .size(180.dp)
@@ -504,7 +453,7 @@ fun GlassHeroCard(
                     .background(
                         Brush.radialGradient(
                             colors = listOf(
-                                BrandColors.DarkHeroGlow.copy(alpha = 0.20f),
+                                BrandColors.DarkHeroGlow.copy(alpha = 0.22f),
                                 Color.Transparent,
                             ),
                         ),
@@ -550,10 +499,7 @@ fun GlassHeroCard(
 }
 
 /**
- * Soft stat card — used for Today / This week / This month / Last month.
- *
- * The leading icon now uses the shared [IconBadge] primitive so it stays
- * visually consistent with the rest of the app.
+ * Soft stat card.
  */
 @Composable
 fun StatCard(
@@ -653,8 +599,6 @@ fun BudgetProgressCard(
         animationSpec = tween(durationMillis = 600),
         label = "budget-percent",
     )
-    // Center text matches the ring fill exactly — same `percentUsed`
-    // Float drives both, so the two numbers can never disagree.
     val percentInt = (percentUsed * 100).toInt()
     GroceryCard(modifier = modifier, onClick = onClick) {
         Row(
@@ -667,10 +611,6 @@ fun BudgetProgressCard(
                 size = 96.dp,
                 strokeWidth = 10.dp,
             )
-            // The text block is vertically centered against the ring so
-            // the "Spent PKR…" / "Safe daily limit" lines read as a
-            // single balanced column whose optical centre lines up with
-            // the ring's centre — not top-anchored.
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically),
@@ -730,17 +670,7 @@ fun BudgetProgressCard(
 }
 
 /**
- * Deterministic grain / noise overlay — draws a faint field of low-alpha
- * specks across the node so a flat gradient surface reads as a textured
- * material (premium "paper stock") rather than a flat CSS gradient.
- *
- * The stipple positions are derived from a tiny hash of the pixel index so
- * the pattern is stable across recompositions (no shimmering) and cheap to
- * compute. The whole field is built once in [drawWithCache] and replayed.
- *
- * @param alpha max speck opacity. 0.05–0.07 reads as a subtle film grain;
- *   anything higher muddies the underlying gradient.
- * @param density dots per 1000px². Higher = tighter, noisier texture.
+ * Deterministic grain / noise overlay.
  */
 fun Modifier.drawGrainOverlay(
     alpha: Float = 0.06f,
@@ -749,9 +679,7 @@ fun Modifier.drawGrainOverlay(
     val w = size.width
     val h = size.height
     val area = (w * h).coerceAtLeast(1f)
-    // ~0.18 specks per 1000px² — tuned to read as grain, not static.
     val count = (area / 1000f * density).toInt().coerceIn(0, 4000)
-    // Tiny inline PRNG seeded from the size so the pattern is stable.
     var seed = (w * 2654435761f + h * 40503f).toLong()
     fun next(): Float {
         seed = seed * 6364136223846793005L + 1442695040888963407L
