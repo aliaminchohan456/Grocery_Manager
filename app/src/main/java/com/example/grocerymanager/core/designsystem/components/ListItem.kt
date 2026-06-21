@@ -1,85 +1,115 @@
 package com.example.grocerymanager.core.designsystem.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.example.grocerymanager.core.designsystem.theme.AppSpacing
 import com.example.grocerymanager.core.designsystem.theme.AppTheme
 import com.example.grocerymanager.core.designsystem.theme.CardPadding
 
-/**
- * Generic clickable list row used by shopping list, category rows, and any
- * future "list of items with a leading slot" surface.
- *
- * Replaces the duplicated `GroceryCard { Row { ... } }` blocks that lived
- * in:
- * - `feature/shoppinglist/ShoppingListScreen.kt` — `ShoppingRow`
- * - `feature/categories/CategoriesScreen.kt` — `CategoryRow`
- *
- * @param leading slot for the leading content (icon badge, checkbox, etc.).
- * @param title the primary label.
- * @param subtitle optional muted line under the title (e.g. qty · unit).
- * @param trailing slot for trailing content (price, action buttons, etc.).
- */
 @Composable
 fun ListItem(
     title: String,
-    modifier: Modifier = Modifier,
     subtitle: String? = null,
-    leading: (@Composable () -> Unit)? = null,
-    trailing: (@Composable () -> Unit)? = null,
-    enabled: Boolean = true,
+    leading: @Composable (() -> Unit)? = null,
+    trailing: @Composable (() -> Unit)? = null,
     onClick: (() -> Unit)? = null,
-    onLongClick: (() -> Unit)? = null,
-    titleColor: androidx.compose.ui.graphics.Color? = null,
-    titleDecoration: androidx.compose.ui.text.style.TextDecoration? = null,
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    titleDecoration: TextDecoration? = null,
+    titleColor: Color = Color.Unspecified
 ) {
+    var isPressed by remember { mutableStateOf(false) }
+
+    // Premium scale bounce jab item pe tap ho
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "listItemScale"
+    )
+
+    val defaultColor = AppTheme.colors.onBackground
+    val resolvedTitleColor by animateColorAsState(
+        targetValue = if (titleColor == Color.Unspecified) defaultColor else titleColor,
+        label = "titleColor"
+    )
+
+    val clickableModifier = if (onClick != null && enabled) {
+        Modifier.clickable { onClick() }
+    } else Modifier
+
     GroceryCard(
-        modifier = modifier,
-        onClick = onClick,
-        onLongClick = onLongClick,
-        contentPadding = CardPadding.Tight.toPaddingValues(),
+        modifier = modifier
+            .fillMaxWidth()
+            .scale(scale)
+            .then(clickableModifier),
+        cardPadding = CardPadding.Tight
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(AppSpacing.sm),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            if (leading != null) leading()
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = titleColor ?: if (enabled) {
-                        MaterialTheme.colorScheme.onSurface
-                    } else {
-                        AppTheme.colors.onSurfaceMuted
-                    },
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textDecoration = titleDecoration,
-                )
-                if (subtitle != null) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
+            ) {
+                if (leading != null) {
+                    leading()
+                    Spacer(modifier = Modifier.width(AppSpacing.md))
+                }
+
+                Column {
                     Text(
-                        text = subtitle,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = AppTheme.colors.onSurfaceMuted,
+                        text = title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = resolvedTitleColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        textDecoration = titleDecoration
                     )
+                    if (!subtitle.isNullOrBlank()) {
+                        Text(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = AppTheme.colors.onSurfaceMuted,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
-            if (trailing != null) trailing()
+
+            if (trailing != null) {
+                Box(modifier = Modifier.padding(start = AppSpacing.sm)) {
+                    trailing()
+                }
+            }
         }
     }
 }

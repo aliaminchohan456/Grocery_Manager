@@ -1,7 +1,9 @@
 package com.example.grocerymanager.core.designsystem.components
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -13,6 +15,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -37,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -58,7 +62,6 @@ import com.example.grocerymanager.core.designsystem.theme.isLight
 import com.example.grocerymanager.core.designsystem.typography.AmountHero
 import kotlin.math.absoluteValue
 
-// Hoisted to module scope so the brushes are only allocated once.
 private val HeroLightGradient: Brush = Brush.linearGradient(
     colors = listOf(
         BrandColors.HeroGradientStart,
@@ -75,19 +78,11 @@ private val HeroDarkGradient: Brush = Brush.linearGradient(
 
 private val DarkGlassGradient: Brush = Brush.linearGradient(
     colors = listOf(
-        Color(0xFF1C1C1E), // Updated to match Apple dark tokens
+        Color(0xFF1C1C1E),
         Color(0xFF121214),
     ),
 )
 
-/**
- * Premium card surface — refined, soft-shadow in light mode, hairline border
- * in dark mode so the card never disappears into the background.
- *
- * Polish: The shadow is now an "Optical Illusion" double-pass.
- * Light Mode uses a wider, softer dark shadow (like floating paper).
- * Dark Mode uses a pure black shadow to create 3D depth.
- */
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun GroceryCard(
@@ -111,11 +106,10 @@ fun GroceryCard(
         else -> elevation
     }
 
-    // The premium shadow double-pass for ultimate depth perception
     val baseModifier = modifier
         .fillMaxWidth()
         .shadow(
-            elevation = if (isLight) 4.dp else 0.dp, // Wider ambient pass
+            elevation = if (isLight) 4.dp else 0.dp,
             shape = AppShapes.Card,
             clip = false,
             ambientColor = if (isLight) Color.Black.copy(alpha = 0.08f)
@@ -126,7 +120,7 @@ fun GroceryCard(
             else Color.Black.copy(alpha = 0f),
         )
         .shadow(
-            elevation = resolvedElevation, // Tighter spot pass
+            elevation = resolvedElevation,
             shape = AppShapes.Card,
             clip = false,
             ambientColor = if (isLight) Color.Black.copy(alpha = 0.05f)
@@ -159,6 +153,15 @@ fun GroceryCard(
     } else baseModifier
 
     val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    // Scale animation for tactile feel
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed && (onClick != null || onLongClick != null)) 0.97f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "card-scale"
+    )
+
     val clickModifier = when {
         onLongClick != null -> Modifier.combinedClickable(
             interactionSource = interactionSource,
@@ -175,7 +178,7 @@ fun GroceryCard(
     }
 
     Surface(
-        modifier = withBorder.then(clickModifier),
+        modifier = withBorder.then(clickModifier).scale(scale), // Applying scale here
         shape = AppShapes.Card,
         color = glassFill,
         contentColor = MaterialTheme.colorScheme.onSurface,
@@ -231,9 +234,6 @@ fun GroceryCard(
     content = content,
 )
 
-/**
- * Premium hero card with rich gradient and white text.
- */
 @Composable
 fun HeroSummaryCard(
     title: String,
@@ -249,7 +249,6 @@ fun HeroSummaryCard(
     val onAccent = AppTheme.colors.onAccent
     val gradient = if (isLight) HeroLightGradient else HeroDarkGradient
 
-    // Softer, more diffused glow for Dribbble-level aesthetics
     val glowModifier = if (isLight) {
         Modifier.shadow(
             elevation = 28.dp,
@@ -298,7 +297,7 @@ fun HeroSummaryCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .matchParentSize()
-                    .drawGrainOverlay(alpha = if (isLight) 0.04f else 0.05f), // Subtle grain
+                    .drawGrainOverlay(alpha = if (isLight) 0.04f else 0.05f),
             )
             Box(
                 modifier = Modifier
@@ -410,9 +409,6 @@ fun HeroSummaryCard(
     }
 }
 
-/**
- * Dark-glass hero card.
- */
 @Composable
 fun GlassHeroCard(
     title: String,
@@ -498,9 +494,6 @@ fun GlassHeroCard(
     }
 }
 
-/**
- * Soft stat card.
- */
 @Composable
 fun StatCard(
     title: String,
@@ -537,9 +530,6 @@ fun StatCard(
     }
 }
 
-/**
- * Insight stat card for monthly comparisons.
- */
 @Composable
 fun InsightCard(
     title: String,
@@ -669,9 +659,6 @@ fun BudgetProgressCard(
     }
 }
 
-/**
- * Deterministic grain / noise overlay.
- */
 fun Modifier.drawGrainOverlay(
     alpha: Float = 0.06f,
     density: Float = 0.18f,

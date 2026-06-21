@@ -1,7 +1,12 @@
 package com.example.grocerymanager.core.designsystem.components
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -21,9 +26,12 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -53,13 +61,6 @@ private val PrimaryDarkGradient: Brush = Brush.linearGradient(
     ),
 )
 
-/**
- * Premium primary button — green gradient with a soft glow in light mode.
- *
- * In dark mode, the surface itself is dark so the gradient carries the
- * emphasis on its own — no extra drop shadow is drawn there to avoid the
- * "halo on a black background" look.
- */
 @Composable
 fun PrimaryButton(
     text: String,
@@ -70,6 +71,16 @@ fun PrimaryButton(
     loading: Boolean = false,
 ) {
     val isLight = AppTheme.colors.isLight()
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    // Premium press bounce animation
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "btn-scale"
+    )
+
     val gradient = if (enabled) {
         if (isLight) PrimaryLightGradient else PrimaryDarkGradient
     } else {
@@ -110,6 +121,7 @@ fun PrimaryButton(
         modifier = modifier
             .fillMaxWidth()
             .height(AppSizing.PrimaryButtonHeight)
+            .scale(scale) // Applied scale
             .clip(AppShapes.Button)
             .then(shadowModifier)
             .background(gradient),
@@ -119,6 +131,7 @@ fun PrimaryButton(
             onClick = onClick,
             enabled = enabled && !loading,
             shape = AppShapes.Button,
+            interactionSource = interactionSource, // Attached interaction source
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Transparent,
                 contentColor = contentColor,
@@ -155,14 +168,6 @@ fun PrimaryButton(
     }
 }
 
-/**
- * Premium secondary (outlined) button. Use this for non-primary actions
- * like "Edit", "Cancel", "Skip", or "Clear".
- *
- * The new [tone] parameter (preferred over the deprecated [destructive]
- * boolean) lets callers flip between a neutral emerald and a destructive
- * red visual style without rebuilding the chrome.
- */
 @Composable
 fun SecondaryButton(
     text: String,
@@ -173,6 +178,15 @@ fun SecondaryButton(
     tone: ButtonTone = ButtonTone.Neutral,
     destructive: Boolean = false,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "btn-scale"
+    )
+
     @Suppress("DEPRECATION")
     val resolvedTone = if (destructive) ButtonTone.Destructive else tone
     val contentColor = when (resolvedTone) {
@@ -189,6 +203,7 @@ fun SecondaryButton(
         onClick = onClick,
         enabled = enabled,
         shape = AppShapes.Button,
+        interactionSource = interactionSource,
         colors = ButtonDefaults.outlinedButtonColors(
             contentColor = contentColor,
             disabledContentColor = disabledColor,
@@ -196,6 +211,7 @@ fun SecondaryButton(
         border = BorderStroke(width = 1.dp, color = if (enabled) borderColor else AppTheme.colors.outline),
         modifier = modifier
             .fillMaxWidth()
+            .scale(scale)
             .height(AppSizing.PrimaryButtonHeight),
     ) {
         Row(
@@ -236,29 +252,28 @@ fun TextLink(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "link-scale"
+    )
+
     TextButton(
         onClick = onClick,
         enabled = enabled,
+        interactionSource = interactionSource,
         shape = AppShapes.ButtonSmall,
         colors = ButtonDefaults.textButtonColors(
             contentColor = AppTheme.colors.brand,
             disabledContentColor = AppTheme.colors.onSurfaceDisabled,
         ),
-        modifier = modifier,
+        modifier = modifier.scale(scale),
     ) { Text(text) }
 }
 
-/**
- * Centered, compact "See all" pill — used as the entry point from a
- * truncated list (e.g. the Home "Recent purchases" list) into the
- * full-screen list (Records). A chevron reinforces the navigation
- * affordance; the brand-tinted text and hairline border make the pill
- * visible without competing with the FAB or the primary CTAs above.
- *
- * Intentionally NOT full-width — a wide CTA would visually compete with
- * the section header above it. A short pill centred under the last card
- * reads as "more rows live in the next screen".
- */
 @Composable
 fun SeeAllButton(
     text: String,
@@ -266,13 +281,23 @@ fun SeeAllButton(
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
 ) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.96f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+        label = "see-all-scale"
+    )
+
     TextButton(
         onClick = onClick,
         shape = AppShapes.ButtonSmall,
+        interactionSource = interactionSource,
         colors = ButtonDefaults.textButtonColors(
             contentColor = AppTheme.colors.brand,
         ),
-        modifier = modifier,
+        modifier = modifier.scale(scale),
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
