@@ -1,5 +1,8 @@
 package com.example.grocerymanager.feature.addpurchase
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -76,30 +79,6 @@ import kotlinx.coroutines.launch
 
 private const val GRID_HEIGHT_DP = 280
 
-/**
- * "Select item" sheet — the "Add item" flow for [AddPurchaseScreen].
- *
- * Walks the user through three progressive steps:
- *
- *  1. **Choose a category** — chip row at the top. The first category is
- *     pre-selected on open so the user lands directly on its item grid.
- *  2. **Pick an item** — 3-column grid of items belonging to the chosen
- *     category. The grid's last tile is an **"+ Add item"** card that
- *     opens an inline item editor (icon + name) to create a brand-new
- *     item in that category without leaving the bill flow.
- *  3. **Quantity & pricing** — quantity input, unit chips, and price/total
- *     fields. The unit defaults to the selected item's `defaultUnit`; the
- *     total auto-recalculates from quantity × price/unit until the user
- *     edits the total by hand.
- *
- * The "Add to bill" button is only enabled once a real item is selected
- * and the total parses to a positive value. On click, the sheet collapses
- * and the parent screen inserts a [DraftItem] into the bill.
- *
- * @param onCreateNewItem  Suspend callback that persists a new grocery item
- *   to the catalog. Returns the new item's id on success or a failure
- *   (e.g. duplicate name).
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SelectItemSheet(
@@ -112,36 +91,21 @@ fun SelectItemSheet(
     onCreateNewCategory: suspend (name: String, iconName: String?) -> Result<Long> = { _, _ -> Result.failure(NotImplementedError()) },
 ) {
     val symbol = remember(currencyCode) { MoneyUtils.symbolFor(currencyCode) }
-    // `scope` is used by the inline "Add item" form and the nested
-    // "Add category" sheet to dispatch their create-* coroutines. The
-    // sheet wrapper itself is owned by [PremiumBottomSheet] and does
-    // not need a manual hide() — the parent flips the show flag to
-    // false when the composable leaves the composition.
     val scope = rememberCoroutineScope()
 
-    // --- Selection state ---------------------------------------------------
     var selectedCategoryId by remember { mutableStateOf<Long?>(null) }
     var selectedItem by remember { mutableStateOf<GroceryItem?>(null) }
 
-    // --- Form state --------------------------------------------------------
     var qty by remember { mutableStateOf("1") }
     var unit by remember { mutableStateOf("") }
     var pricePerUnitInput by remember { mutableStateOf("") }
     var totalInput by remember { mutableStateOf("") }
     var totalManuallyEdited by remember { mutableStateOf(false) }
 
-    // --- Inline "Add item" editor state ------------------------------------
-    // Replaces the old `NewItemDialog`. Lives in this sheet (no nested
-    // bottom sheets — the icon picker is disabled here for the same
-    // reason; the user can customise the icon later in CategoryDetail).
     var newItemEditor by remember { mutableStateOf<CategoryItemEditor?>(null) }
     var pendingNewItemId by remember { mutableStateOf<Long?>(null) }
-    // "Add category" sheet state — opens the shared
-    // `CategoryEditorSheet` so a new category can be created inline
-    // without leaving the Add Purchase flow.
     var showAddCategorySheet by remember { mutableStateOf(false) }
 
-    // --- Derived -----------------------------------------------------------
     val itemsInCategory = remember(selectedCategoryId, groceryItems) {
         val id = selectedCategoryId
         if (id == null) emptyList()
@@ -161,13 +125,6 @@ fun SelectItemSheet(
         totalInput = MoneyUtils.toMajorUnits(MoneyUtils.multiply(q, p)).toPlainString()
     }
 
-    /**
-     * Bidirectional companion to [recalcTotal]: when the user types the
-     * total directly (e.g. "I paid 1140 for 10 kg of flour"), derive
-     * price-per-unit from total / quantity. Uses BigDecimal HALF_UP so
-     * values like 1140 / 10 round to 114, and 50 / 3 rounds to 16.67.
-     * No-op when quantity is 0 or the total is unparseable.
-     */
     fun recalcPricePerUnit() {
         val q = qty.toDoubleOrNull() ?: 0.0
         val t = MoneyUtils.parse(totalInput) ?: 0L
@@ -179,22 +136,16 @@ fun SelectItemSheet(
         }
     }
 
-    // Auto-select the first category the moment the chip row becomes
-    // available, so the user lands directly on the item grid instead of
-    // seeing an empty "choose a category" step.
     LaunchedEffect(categories) {
         if (selectedCategoryId == null) {
             selectedCategoryId = categories.firstOrNull()?.id
         }
     }
 
-    // Changing the category clears the item selection so the pricing fields
-    // don't reference a stale item.
     LaunchedEffect(selectedCategoryId) {
         selectedItem = null
     }
 
-    // Selecting an item pre-fills its default unit and resets the price fields.
     LaunchedEffect(selectedItem) {
         val item = selectedItem
         if (item != null) {
@@ -206,9 +157,6 @@ fun SelectItemSheet(
         }
     }
 
-    // After createNewGroceryItem succeeds, the catalog flow updates. Watch
-    // for the new item's id and auto-select it so the user lands on the
-    // pricing fields ready to fill in.
     LaunchedEffect(pendingNewItemId, groceryItems) {
         val newId = pendingNewItemId ?: return@LaunchedEffect
         val newItem = groceryItems.find { it.id == newId }
@@ -228,11 +176,10 @@ fun SelectItemSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .animateContentSize(animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow)), // Beautiful smooth expansion
             verticalArrangement = Arrangement.spacedBy(AppSpacing.md),
         ) {
-            // --- 1. Category picker -----------------------------------------
-            // Chip removed — the picker speaks for itself.
             if (categories.isEmpty()) {
                 Text(
                     text = stringResource(R.string.add_item_no_category),
@@ -273,9 +220,6 @@ fun SelectItemSheet(
                             shape = AppShapes.Chip,
                         )
                     }
-                    // "Add category" chip at the end of the row — opens
-                    // the shared `CategoryEditorSheet` so a new category
-                    // can be created without leaving the Add Purchase flow.
                     item("add-category-chip") {
                         AssistChip(
                             onClick = { showAddCategorySheet = true },
@@ -302,13 +246,8 @@ fun SelectItemSheet(
                 }
             }
 
-            // --- 2/3. Inline editor OR grid + pricing -----------------------
             val editor = newItemEditor
             if (editor != null) {
-                // "Add item" mode — show the editor form in place of the
-                // grid. The default-unit field is hidden per the inline-flow
-                // requirement; the icon is non-interactive (no nested
-                // bottom sheet) and shows the category fallback.
                 ItemEditorForm(
                     editor = editor,
                     fallbackIconName = selectedCategory?.iconName,
@@ -344,8 +283,8 @@ fun SelectItemSheet(
                                 .onFailure { e ->
                                     val msg = e.message ?: ""
                                     val isDuplicate = msg.contains("UNIQUE", ignoreCase = true) ||
-                                        msg.contains("duplicate", ignoreCase = true) ||
-                                        msg.contains("already exists", ignoreCase = true)
+                                            msg.contains("duplicate", ignoreCase = true) ||
+                                            msg.contains("already exists", ignoreCase = true)
                                     newItemEditor = current.copy(
                                         nameErrorKey = if (isDuplicate) EditorErrorKey.Duplicate else null,
                                     )
@@ -357,8 +296,6 @@ fun SelectItemSheet(
                     showIconPicker = true,
                 )
             } else if (selectedCategoryId != null) {
-                // --- 2. Items grid -----------------------------------------
-                // Chip removed — the grid speaks for itself.
                 if (itemsInCategory.isEmpty()) {
                     Text(
                         text = stringResource(R.string.select_item_no_items),
@@ -376,12 +313,17 @@ fun SelectItemSheet(
                         .height(GRID_HEIGHT_DP.dp),
                 ) {
                     items(itemsInCategory, key = { it.id }) { item ->
-                        SelectItemCard(
-                            item = item,
-                            colorHex = selectedCategory?.colorHex ?: BrandColors.CategoryFallbackHex,
-                            selected = item.id == selectedItem?.id,
-                            onClick = { selectedItem = item },
-                        )
+                        Box(modifier = Modifier.animateItem(
+                            fadeInSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                            placementSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioLowBouncy)
+                        )) {
+                            SelectItemCard(
+                                item = item,
+                                colorHex = selectedCategory?.colorHex ?: BrandColors.CategoryFallbackHex,
+                                selected = item.id == selectedItem?.id,
+                                onClick = { selectedItem = item },
+                            )
+                        }
                     }
                     item("add-item-card") {
                         AddItemCard(onClick = {
@@ -396,123 +338,122 @@ fun SelectItemSheet(
                     }
                 }
 
-                // --- 3. Quantity, unit, pricing (visible once an item is chosen) -
                 if (selectedItem != null) {
-                    // Chip removed — pricing fields speak for themselves.
-                    QuantityInputField(
-                        value = qty,
-                        onValueChange = {
-                            qty = it
-                            recalcTotal()
-                        },
-                        label = stringResource(R.string.add_item_qty_label),
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(AppSpacing.xxs),
+                    Column(
+                        modifier = Modifier.animateContentSize(),
+                        verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)
                     ) {
-                        Units.Common.take(4).forEach { u ->
-                            SegmentedChip(
-                                label = u,
-                                selected = unit.equals(u, ignoreCase = true),
-                                onClick = {
-                                    unit = u
-                                    totalManuallyEdited = false
-                                    recalcTotal()
-                                },
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(AppSpacing.xxs),
-                    ) {
-                        Units.Common.drop(4).forEach { u ->
-                            SegmentedChip(
-                                label = u,
-                                selected = unit.equals(u, ignoreCase = true),
-                                onClick = {
-                                    unit = u
-                                    totalManuallyEdited = false
-                                    recalcTotal()
-                                },
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-                        SegmentedChip(
-                            label = stringResource(R.string.add_item_unit_custom),
-                            selected = Units.isCustom(unit),
-                            onClick = {
-                                if (Units.Common.any { it.equals(unit, ignoreCase = true) }) unit = ""
+                        QuantityInputField(
+                            value = qty,
+                            onValueChange = {
+                                qty = it
+                                recalcTotal()
                             },
-                            modifier = Modifier.weight(1f),
+                            label = stringResource(R.string.add_item_qty_label),
                         )
-                    }
-                    if (Units.isCustom(unit)) {
-                        TextInputField(
-                            value = unit,
-                            onValueChange = { unit = it },
-                            label = stringResource(R.string.add_item_unit_custom_label),
-                            placeholder = stringResource(R.string.add_item_unit_custom_placeholder),
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
-                    ) {
-                        Box(modifier = Modifier.weight(1f)) {
-                            AmountInputField(
-                                value = pricePerUnitInput,
-                                onValueChange = {
-                                    pricePerUnitInput = it
-                                    totalManuallyEdited = false
-                                    recalcTotal()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(AppSpacing.xxs),
+                        ) {
+                            Units.Common.take(4).forEach { u ->
+                                SegmentedChip(
+                                    label = u,
+                                    selected = unit.equals(u, ignoreCase = true),
+                                    onClick = {
+                                        unit = u
+                                        totalManuallyEdited = false
+                                        recalcTotal()
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                        }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(AppSpacing.xxs),
+                        ) {
+                            Units.Common.drop(4).forEach { u ->
+                                SegmentedChip(
+                                    label = u,
+                                    selected = unit.equals(u, ignoreCase = true),
+                                    onClick = {
+                                        unit = u
+                                        totalManuallyEdited = false
+                                        recalcTotal()
+                                    },
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                            SegmentedChip(
+                                label = stringResource(R.string.add_item_unit_custom),
+                                selected = Units.isCustom(unit),
+                                onClick = {
+                                    if (Units.Common.any { it.equals(unit, ignoreCase = true) }) unit = ""
                                 },
-                                label = stringResource(R.string.add_item_price_per_unit_label),
-                                currencySymbol = symbol,
+                                modifier = Modifier.weight(1f),
                             )
                         }
-                        Box(modifier = Modifier.weight(1f)) {
-                            AmountInputField(
-                                value = totalInput,
-                                onValueChange = {
-                                    totalInput = it
-                                    totalManuallyEdited = true
-                                    recalcPricePerUnit()
-                                },
-                                label = stringResource(R.string.add_item_total_label),
-                                currencySymbol = symbol,
+                        if (Units.isCustom(unit)) {
+                            TextInputField(
+                                value = unit,
+                                onValueChange = { unit = it },
+                                label = stringResource(R.string.add_item_unit_custom_label),
+                                placeholder = stringResource(R.string.add_item_unit_custom_placeholder),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                             )
                         }
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+                        ) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                AmountInputField(
+                                    value = pricePerUnitInput,
+                                    onValueChange = {
+                                        pricePerUnitInput = it
+                                        totalManuallyEdited = false
+                                        recalcTotal()
+                                    },
+                                    label = stringResource(R.string.add_item_price_per_unit_label),
+                                    currencySymbol = symbol,
+                                )
+                            }
+                            Box(modifier = Modifier.weight(1f)) {
+                                AmountInputField(
+                                    value = totalInput,
+                                    onValueChange = {
+                                        totalInput = it
+                                        totalManuallyEdited = true
+                                        recalcPricePerUnit()
+                                    },
+                                    label = stringResource(R.string.add_item_total_label),
+                                    currencySymbol = symbol,
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(AppSpacing.xs))
+                        PrimaryButton(
+                            text = stringResource(R.string.action_add_to_bill),
+                            enabled = canSave,
+                            onClick = {
+                                val item = selectedItem ?: return@PrimaryButton
+                                val catId = selectedCategoryId ?: return@PrimaryButton
+                                onSave(
+                                    DraftItem(
+                                        tempId = 0L,
+                                        itemName = item.name,
+                                        categoryId = catId,
+                                        quantity = parsedQty,
+                                        unit = unit.trim(),
+                                        pricePerUnit = MoneyUtils.parse(pricePerUnitInput),
+                                        totalPrice = parsedTotal,
+                                        groceryItemId = item.id,
+                                    ),
+                                )
+                            },
+                        )
                     }
-                    Spacer(Modifier.height(AppSpacing.xs))
-                    PrimaryButton(
-                        text = stringResource(R.string.action_add_to_bill),
-                        enabled = canSave,
-                        onClick = {
-                            val item = selectedItem ?: return@PrimaryButton
-                            val catId = selectedCategoryId ?: return@PrimaryButton
-                            onSave(
-                                DraftItem(
-                                    tempId = 0L,
-                                    itemName = item.name,
-                                    categoryId = catId,
-                                    quantity = parsedQty,
-                                    unit = unit.trim(),
-                                    pricePerUnit = MoneyUtils.parse(pricePerUnitInput),
-                                    totalPrice = parsedTotal,
-                                    groceryItemId = item.id,
-                                ),
-                            )
-                            // Phase 4: drop the redundant `onDismiss()` call —
-                            // the parent flips `showSelectItemSheet` to false
-                            // when the composable leaves the composition,
-                            // which removes the sheet from the tree.
-                        },
-                    )
                 }
             }
         }
@@ -525,8 +466,6 @@ fun SelectItemSheet(
                 scope.launch {
                     val result = onCreateNewCategory(name, iconName)
                     result.onSuccess { newId ->
-                        // Auto-select the newly-created category so the
-                        // user lands directly on its item grid.
                         selectedCategoryId = newId
                     }
                 }
@@ -536,11 +475,6 @@ fun SelectItemSheet(
     }
 }
 
-/**
- * Single item tile inside the SelectItem sheet's 3-column grid. When
- * [selected] the card gets a brand-coloured border so the user can see
- * which item is currently chosen.
- */
 @Composable
 private fun SelectItemCard(
     item: GroceryItem,
@@ -570,7 +504,7 @@ private fun SelectItemCard(
                 CategoryIcon(
                     iconName = item.iconName,
                     colorHex = colorHex,
-                    size = AppSizing.IconBadgeMedium + AppSpacing.xxs, // ~36dp for tiles
+                    size = AppSizing.IconBadgeMedium + AppSpacing.xxs,
                 )
                 Text(
                     text = item.name,
@@ -584,11 +518,6 @@ private fun SelectItemCard(
     }
 }
 
-/**
- * The grid's last tile — a brand-tinted "+ Add item" card. Tap to open the
- * inline item editor (icon + name, no default unit) for creating a new
- * item in the currently selected category.
- */
 @Composable
 private fun AddItemCard(onClick: () -> Unit) {
     GroceryCard(

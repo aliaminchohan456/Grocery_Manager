@@ -1,5 +1,8 @@
 package com.example.grocerymanager.feature.addpurchase
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -57,10 +60,6 @@ import com.example.grocerymanager.core.designsystem.components.DatePickerField
 import com.example.grocerymanager.core.designsystem.components.EmptyState
 import com.example.grocerymanager.core.designsystem.components.GroceryCard
 import com.example.grocerymanager.core.designsystem.components.HeroSummaryCard
-import com.example.grocerymanager.core.designsystem.components.IconBadge
-import com.example.grocerymanager.core.designsystem.components.IconBadgeSize
-import com.example.grocerymanager.core.designsystem.components.InfoBadge
-import com.example.grocerymanager.core.designsystem.components.InfoBadgeTone
 import com.example.grocerymanager.core.designsystem.components.MagneticButton
 import com.example.grocerymanager.core.designsystem.components.PremiumBottomSheet
 import com.example.grocerymanager.core.designsystem.components.PremiumDatePickerDialog
@@ -91,10 +90,6 @@ fun AddPurchaseScreen(
     val shopSuggestions by viewModel.shopSuggestions.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
-    // When the user taps outside the shop-name field (or on the "Select
-    // item" button), clear focus from the text field and dismiss the
-    // soft keyboard. Without this, selecting an item leaves focus on
-    // the shop field and pops the keyboard up over the sheet.
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
@@ -130,8 +125,6 @@ fun AddPurchaseScreen(
                     .fillMaxWidth()
                     .imePadding()
                     .navigationBarsPadding()
-                    // Standardised to AppSpacing.lg to match the rest of
-                    // the app's primary CTA container padding (24dp).
                     .padding(horizontal = AppSpacing.lg, vertical = AppSpacing.sm),
             ) {
                 MagneticButton(
@@ -158,7 +151,8 @@ fun AddPurchaseScreen(
             LazyColumn(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .animateContentSize(), // Premium smooth resizing
                 contentPadding = PaddingValues(
                     start = AppSizing.ScreenEdgeHorizontal,
                     end = AppSizing.ScreenEdgeHorizontal,
@@ -168,8 +162,6 @@ fun AddPurchaseScreen(
                 verticalArrangement = Arrangement.spacedBy(AppSpacing.sm),
             ) {
                 item {
-                    // Phase 4: the hero total now wears an `InfoBadge("Editing")`
-                    // pill in the badge slot when editing an existing purchase.
                     HeroSummaryCard(
                         title = stringResource(R.string.add_purchase_bill_total),
                         amount = MoneyUtils.format(state.total, state.currencyCode),
@@ -185,7 +177,10 @@ fun AddPurchaseScreen(
 
                 item {
                     GroceryCard(cardPadding = com.example.grocerymanager.core.designsystem.theme.CardPadding.Standard) {
-                        Column(verticalArrangement = Arrangement.spacedBy(AppSpacing.sm)) {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(AppSpacing.sm),
+                            modifier = Modifier.animateContentSize()
+                        ) {
                             DatePickerField(
                                 value = DateFormat.longDate(state.purchaseDate),
                                 onClick = { viewModel.showDatePicker(true) },
@@ -208,8 +203,6 @@ fun AddPurchaseScreen(
                 }
 
                 item {
-                    // Items section header — just the title + action now
-                    // (chip removed app-wide).
                     SectionHeader(
                         title = stringResource(R.string.add_purchase_items_section),
                         action = {
@@ -233,27 +226,23 @@ fun AddPurchaseScreen(
                 } else {
                     items(state.items, key = { it.tempId }) { item ->
                         val cat = categories.firstOrNull { it.id == item.categoryId }
-                        GroceryCard(cardPadding = com.example.grocerymanager.core.designsystem.theme.CardPadding.Standard) {
-                            PurchaseItemRow(
-                                itemName = item.itemName,
-                                quantity = item.quantity,
-                                unit = item.unit,
-                                totalPrice = item.totalPrice,
-                                currencyCode = state.currencyCode,
-                                categoryName = cat?.name,
-                                pricePerUnit = item.pricePerUnit,
-                                // Tapping the row opens the inline
-                                // editor so the user can add / change
-                                // the price (and qty / unit). Without
-                                // this, items pre-filled from the
-                                // shopping-list convert flow (every row
-                                // lands with totalPrice = 0) can only be
-                                // priced by deleting and re-adding via
-                                // the catalog — which is exactly the
-                                // friction the user reported.
-                                onClick = { viewModel.startEditingItem(item.tempId) },
-                                onDelete = { viewModel.removeItem(item.tempId) },
-                            )
+                        Box(modifier = Modifier.animateItem(
+                            fadeInSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                            placementSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioLowBouncy)
+                        )) {
+                            GroceryCard(cardPadding = com.example.grocerymanager.core.designsystem.theme.CardPadding.Standard) {
+                                PurchaseItemRow(
+                                    itemName = item.itemName,
+                                    quantity = item.quantity,
+                                    unit = item.unit,
+                                    totalPrice = item.totalPrice,
+                                    currencyCode = state.currencyCode,
+                                    categoryName = cat?.name,
+                                    pricePerUnit = item.pricePerUnit,
+                                    onClick = { viewModel.startEditingItem(item.tempId) },
+                                    onDelete = { viewModel.removeItem(item.tempId) },
+                                )
+                            }
                         }
                     }
                 }
@@ -296,11 +285,6 @@ fun AddPurchaseScreen(
         )
     }
 
-    // Edit-item sheet — opens when the user taps any row in the items
-    // list. Critical for the shopping-list → purchase convert flow:
-    // every row lands with `totalPrice = 0L`, so without an edit
-    // affordance the "Update purchase" CTA stays disabled and the user
-    // is forced to delete + re-add each item via the catalog picker.
     val editing = state.editingItem
     if (editing != null) {
         val editingCategory = categories.firstOrNull { it.id == editing.categoryId }
@@ -316,12 +300,6 @@ fun AddPurchaseScreen(
     }
 }
 
-/**
- * Inline editor for a single item already on the bill. Lets the user
- * adjust qty / unit / price-per-unit / total without leaving the
- * AddPurchase flow. Bidirectional price ↔ total recalculation mirrors
- * [SelectItemSheet] so the two surfaces feel identical.
- */
 @Composable
 private fun PurchaseItemEditorSheet(
     draft: DraftItem,
@@ -381,14 +359,10 @@ private fun PurchaseItemEditorSheet(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .navigationBarsPadding(),
+                .navigationBarsPadding()
+                .animateContentSize(), // Smooth height changes when expanding custom inputs
             verticalArrangement = Arrangement.spacedBy(AppSpacing.sm),
         ) {
-            // Read-only summary — the user can see what they're
-            // editing (item name + category) without being able to
-            // accidentally swap the underlying catalog item from this
-            // surface. To change the item itself they should delete
-            // and re-add via "Select item".
             GroceryCard(cardPadding = com.example.grocerymanager.core.designsystem.theme.CardPadding.Standard) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
