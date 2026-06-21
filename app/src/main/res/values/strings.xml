@@ -1,0 +1,397 @@
+<resources>
+    <string name="app_name">Grocery Manager</string>
+    <string name="app_subtitle">Monthly Grocery Expense Tracker</string>
+    <string name="app_tagline">Monthly grocery expense tracker</string>
+    <string name="slogan">A premium household grocery finance dashboard for Android.</string>
+
+    <!-- Common -->
+    <string name="action_save">Save</string>
+    <string name="action_save_purchase">Save purchase</string>
+    <string name="action_update_purchase">Update purchase</string>
+    <string name="action_add">Add</string>
+    <string name="action_update">Update</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_undo">Undo</string>
+    <string name="action_done">Done</string>
+    <string name="action_skip">Skip</string>
+    <string name="action_skip_set_later">Skip — set later</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_get_started">Get Started</string>
+    <string name="action_next">Next</string>
+    <string name="action_back">Back</string>
+    <string name="action_close">Close</string>
+    <string name="action_retry">Retry</string>
+    <string name="action_yes">Yes</string>
+    <string name="action_no">No</string>
+    <string name="action_ok">OK</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_finish">Finish</string>
+    <string name="action_add_item">Add item</string>
+    <string name="action_add_to_bill">Add to bill</string>
+    <string name="action_add_to_list">Add to list</string>
+    <string name="action_add_first_purchase">Add your first purchase</string>
+    <string name="action_add_first_item">Add your first item</string>
+    <string name="action_set_budget">Set budget</string>
+    <string name="action_edit_budget">Edit budget</string>
+    <string name="action_select">Select</string>
+    <string name="action_selected">Selected</string>
+    <string name="action_convert_to_purchase">Convert to purchase</string>
+    <string name="action_clear_all">Clear all data</string>
+    <string name="action_export_csv">Export to CSV</string>
+    <string name="action_search_currency">Search currency</string>
+    <string name="action_more_options">More options</string>
+    <string name="action_clear_all_data">Clear all data</string>
+
+    <!-- Tabs -->
+    <string name="tab_home">Home</string>
+    <string name="tab_records">Records</string>
+    <string name="tab_insights">Insights</string>
+    <string name="tab_settings">Settings</string>
+    <string name="tab_categories">Categories</string>
+
+    <!-- Theme -->
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_oled">OLED</string>
+
+    <!-- Unit system -->
+    <string name="unit_metric">Metric (kg, L)</string>
+    <string name="unit_imperial">Imperial (lb, oz)</string>
+
+    <!-- Home -->
+    <string name="home_greeting_morning">Good morning</string>
+    <string name="home_greeting_afternoon">Good afternoon</string>
+    <string name="home_greeting_evening">Good evening</string>
+    <string name="home_greeting_hello">Hello</string>
+    <string name="home_subtitle">Your grocery spending at a glance.</string>
+    <string name="shop_name_unknown">Unknown shop</string>
+    <string name="home_budget_remaining">Budget remaining</string>
+    <string name="home_budget_subtitle">%1$s of %2$s this month</string>
+    <string name="home_days_left">%1$dd left</string>
+    <string name="home_this_month">This month</string>
+    <string name="home_this_month_no_budget">Total grocery spend this month  ·  no budget set</string>
+    <string name="home_set_budget_title">Set a monthly budget</string>
+    <string name="home_set_budget_subtitle">Track remaining and your safe daily limit.</string>
+    <string name="home_today">Today</string>
+    <string name="home_this_week">This week</string>
+    <string name="home_quick_actions">Quick actions</string>
+    <string name="home_quick_shopping_list">Shopping list</string>
+    <string name="home_quick_shopping_list_cd">Open shopping list</string>
+    <string name="home_quick_insights">Insights</string>
+    <string name="home_quick_records">Records</string>
+    <string name="home_quick_add_purchase">Add purchase</string>
+    <string name="home_fab_add_purchase">Add purchase</string>
+    <string name="home_fab_extended_label">Add purchase</string>
+    <string name="home_quick_add_item">Add item</string>
+    <string name="home_quick_add_item_cd">Add new item to a category</string>
+    <string name="home_recent_purchases">Recent purchases</string>
+    <string name="home_recent_purchases_cd">Recent purchases, %1$d shown</string>
+    <string name="home_tap_to_view">Tap to view</string>
+    <!-- Recent purchase card: "+ N more items" overflow line. %1$d is the count. -->
+    <string name="home_recent_more_items">+%1$d more items</string>
+    <string name="home_recent_more_item">+%1$d more item</string>
+    <!-- Content description for the category color dot on each item row. -->
+    <string name="home_recent_item_category_dot">%1$s category</string>
+    <!-- "See all" pill below the recent-purchases list on the Home screen. -->
+    <string name="home_recent_see_all">See all</string>
+    <string name="home_recent_see_all_cd">Open Records screen</string>
+    <string name="home_top_category">Top category this month</string>
+    <string name="home_top_category_percent">%1$d%% of monthly spend</string>
+    <string name="home_top_category_subtitle">%1$s share of this month\'s spend</string>
+    <string name="home_top_category_empty">No category data yet</string>
+    <string name="home_empty_title">No purchases yet</string>
+    <string name="home_empty_body">Add your first grocery bill to start tracking your monthly spending.</string>
+    <string name="home_add_item_sheet_title">Add to which category?</string>
+    <string name="home_add_item_sheet_body">Pick a category to add a new item.</string>
+    <string name="home_budget_spent">Spent</string>
+    <string name="home_budget_of_total">of %1$s</string>
+    <string name="home_budget_safe_limit">Safe daily limit  ·  %1$s</string>
+    <string name="home_budget_days_left">%1$d day(s) left this month</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_page1_title">Track every grocery bill</string>
+    <string name="onboarding_page1_body">Log every shopping trip with multiple items in seconds — a real bill, not a calculator.</string>
+    <string name="onboarding_page2_title">Control monthly spending</string>
+    <string name="onboarding_page2_body">Set a monthly budget and see how much you can safely spend each day.</string>
+    <string name="onboarding_page3_title">Understand your expenses</string>
+    <string name="onboarding_page3_body">See category breakdowns, top items, and price trends to make smarter choices.</string>
+    <string name="onboarding_swipe_hint">Swipe to explore</string>
+
+    <!-- Setup -->
+    <string name="setup_title">Let\'s set things up</string>
+    <string name="setup_body">Choose your currency now. You can set a monthly budget anytime from Settings.</string>
+    <string name="setup_currency_section">Currency</string>
+    <string name="setup_currency_change">Change</string>
+    <string name="setup_currency_popular_label">Popular</string>
+    <string name="setup_budget_section">Monthly budget  ·  optional</string>
+    <string name="setup_budget_label">Budget</string>
+    <string name="setup_budget_helper">You can skip this and set it later from Settings.</string>
+    <string name="setup_budget_invalid">Enter a valid amount</string>
+    <string name="setup_budget_alert">Alert at %1$d%% of monthly budget</string>
+    <string name="setup_budget_clear">Clear budget</string>
+    <string name="setup_units_section">Default unit system</string>
+    <string name="setup_theme_section">Theme</string>
+    <string name="setup_more_options">More options</string>
+    <string name="setup_show_less">Show less</string>
+    <string name="setup_show_all_currencies">Show all currencies</string>
+    <string name="setup_hide_all_currencies">Hide all currencies</string>
+    <string name="setup_currency_meta">%1$s  ·  %2$s</string>
+
+    <!-- Select currency screen -->
+    <string name="select_currency_title">Select currency</string>
+    <string name="select_currency_search_hint">Search code or name</string>
+    <string name="select_currency_popular_label">Popular</string>
+    <string name="select_currency_no_results">No currencies match your search.</string>
+    <string name="select_currency_no_results_eyebrow">No matches</string>
+    <string name="select_currency_no_results_title">No currencies found</string>
+    <string name="select_currency_no_results_body">Try a different code, symbol, or country name. You can also add a custom 3-letter currency code at the bottom of the list.</string>
+    <string name="select_currency_back">Back</string>
+
+    <!-- Budget -->
+    <string name="budget_title">Budget</string>
+    <string name="budget_empty_title">No budget set</string>
+    <string name="budget_empty_body">Set a monthly budget to see remaining spend and your safe daily limit.</string>
+    <string name="budget_empty_eyebrow">No budget yet</string>
+    <string name="budget_percent_used">%1$d%%</string>
+    <string name="budget_remaining">Remaining: %1$s</string>
+    <string name="budget_over">Over by %1$s</string>
+    <string name="budget_daily_safe_limit">Daily safe limit</string>
+    <string name="budget_days_left_plural">%1$d day(s) left in month</string>
+    <string name="budget_recent_section">Recent budgets</string>
+    <string name="budget_recent_subtitle">Past monthly budget</string>
+    <string name="budget_set_monthly_title">Set monthly budget</string>
+    <string name="budget_editor_body">Pick a monthly limit and the alert threshold that warns you when you cross it.</string>
+    <string name="budget_alert_label">Alert at %1$d%%</string>
+    <string name="budget_clear_confirm_title">Delete budget?</string>
+    <string name="budget_clear_confirm_message">This removes the budget for this month. You can set a new one at any time.</string>
+    <string name="budget_cleared">Budget cleared</string>
+
+    <!-- Records -->
+    <string name="records_title">Records</string>
+    <string name="records_search_placeholder">Search shop or note</string>
+    <string name="records_filter_today">Today</string>
+    <string name="records_filter_week">This week</string>
+    <string name="records_filter_month">This month</string>
+    <string name="records_filter_last_month">Last month</string>
+    <string name="records_filter_all">All</string>
+    <string name="records_total_in_range">Total in range</string>
+    <string name="records_empty_title">No purchases in this range</string>
+    <string name="records_empty_body">Try a different filter, or log a new grocery bill to start tracking.</string>
+
+    <!-- Insights -->
+    <string name="insights_title">Insights</string>
+    <string name="insights_empty_title">Not enough data yet</string>
+    <string name="insights_empty_body">Insights appear after you log a few purchases. Trends, breakdowns, and top items will show here.</string>
+    <string name="insights_empty_eyebrow">No data yet</string>
+    <string name="insights_this_month">This month</string>
+    <string name="insights_last_month">Last month</string>
+    <string name="insights_change_vs_last">%1$s vs last</string>
+    <string name="insights_trend_section">Monthly trend</string>
+    <string name="insights_trend_placeholder">Trend chart appears once you have a few months of data</string>
+    <string name="insights_categories_section">Category breakdown</string>
+    <string name="insights_top_items_section">Top items</string>
+    <string name="insights_top_item_meta">%1$d purchase(s)  ·  %2$s</string>
+
+    <!-- Add purchase -->
+    <string name="add_purchase_title">Add purchase</string>
+    <string name="add_purchase_edit_title">Edit purchase</string>
+    <string name="add_purchase_edit_item_title">Edit item</string>
+    <string name="add_purchase_bill_total">Bill total</string>
+    <string name="add_purchase_items_count">%1$d item(s)  ·  %2$s</string>
+    <string name="add_purchase_badge_editing">Editing</string>
+    <string name="add_purchase_items_empty_eyebrow">No items yet</string>
+    <string name="add_purchase_date_label">Date</string>
+    <string name="add_purchase_shop_label">Shop name</string>
+    <string name="add_purchase_shop_placeholder">e.g. Al-Madina Store</string>
+    <string name="add_purchase_items_section">Items</string>
+    <string name="add_purchase_add_item">+ Add item</string>
+    <string name="add_purchase_select_item">Select item</string>
+    <string name="add_purchase_items_empty_title">No items yet</string>
+    <string name="add_purchase_items_empty_body">Tap Add item to log what you bought. You can edit the bill total at the end.</string>
+    <string name="add_purchase_notes_label">Notes (optional)</string>
+    <string name="add_purchase_notes_placeholder">e.g. shared with neighbour</string>
+    <string name="add_purchase_error_not_found">Purchase not found</string>
+    <string name="add_purchase_error_save_failed">Failed to save</string>
+
+    <!-- Select item sheet (pick from catalog) -->
+    <string name="select_item_title">Select item</string>
+    <string name="select_item_choose_category">Choose a category</string>
+    <string name="select_item_choose_item">Pick an item</string>
+    <string name="select_item_no_items">No items in this category yet. Tap + to create one.</string>
+    <string name="select_item_add_item_card">Add item</string>
+    <string name="select_item_quantity_pricing">Quantity &amp; pricing</string>
+    <string name="select_item_new_item_title">New item</string>
+    <string name="select_item_new_item_name">Item name</string>
+    <string name="select_item_new_item_unit">Default unit (optional)</string>
+    <string name="select_item_new_item_create">Create</string>
+    <string name="select_item_new_item_failed">Could not create item</string>
+
+    <!-- Add item sheet -->
+    <string name="add_item_title">Add item</string>
+    <string name="edit_item_title">Edit item</string>
+    <string name="add_item_name_label">Item name</string>
+    <string name="add_item_category_label">Category</string>
+    <string name="add_item_no_category">Add a category in Settings first.</string>
+    <string name="add_item_quantity_unit_label">Quantity &amp; unit</string>
+    <string name="add_item_qty_label">Qty</string>
+    <string name="add_item_unit_custom">Custom</string>
+    <string name="add_item_unit_custom_label">Custom unit</string>
+    <string name="add_item_unit_custom_placeholder">kg, L, pack…</string>
+    <string name="add_item_pricing_label">Pricing</string>
+    <string name="add_item_price_per_unit_label">Price / unit</string>
+    <string name="add_item_total_label">Total</string>
+    <string name="add_item_close">Close</string>
+
+    <!-- Purchase detail -->
+    <string name="purchase_detail_title">Purchase</string>
+    <string name="purchase_detail_bill">Bill</string>
+    <string name="purchase_detail_notes">Notes</string>
+    <string name="purchase_detail_items">Items  ·  %1$d</string>
+    <string name="purchase_detail_empty_title">Purchase not found</string>
+    <string name="purchase_detail_empty_body">This bill may have been deleted.</string>
+    <string name="purchase_detail_delete_confirm_title">Delete purchase?</string>
+    <string name="purchase_detail_delete_confirm_message">This will remove the bill and all its items. You can undo this from the snackbar.</string>
+    <string name="purchase_detail_deleted">Purchase deleted</string>
+    <string name="purchase_detail_undo_failed">Undo failed</string>
+    <string name="purchase_detail_generic_error">Something went wrong. Please try again.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_currency_section">Currency</string>
+    <string name="settings_currency_subtitle">Active for all amounts across the app</string>
+    <string name="settings_theme_section">Theme</string>
+    <string name="settings_units_section">Default unit system</string>
+    <string name="settings_budget_alert_section">Budget alert</string>
+    <string name="settings_manage_section">Manage</string>
+    <string name="settings_data_section">Data</string>
+    <string name="settings_alert_label">Alert at %1$d%% of monthly budget</string>
+    <string name="settings_categories_button">Categories  ·  %1$d</string>
+    <string name="settings_budget_button">Budget</string>
+    <string name="settings_version">Grocery Manager v1.0.0</string>
+    <string name="settings_clear_confirm_title">Clear all data?</string>
+    <string name="settings_clear_confirm_message">This permanently deletes every purchase, item, budget, and category. This cannot be undone.</string>
+    <string name="settings_export_success">Exported %1$d bills to %2$s</string>
+    <string name="settings_export_failed">Export failed: %1$s</string>
+
+    <!-- Categories -->
+    <string name="categories_title">Categories</string>
+    <string name="categories_new_label">New category</string>
+    <string name="categories_add_category_fab">Add category</string>
+    <string name="categories_add_category_chip">Add category</string>
+    <string name="select_item_add_category_chip">Add category</string>
+    <string name="categories_default_label">Default</string>
+    <string name="categories_default_help">Tap to open, drag the handle to reorder, or use the trash icon to delete. Categories in use by purchases can\'t be removed.</string>
+    <string name="categories_empty_title">No categories</string>
+    <string name="categories_empty_body">Add your first custom category above.</string>
+    <string name="categories_delete_confirm_title">Delete \"%1$s\"?</string>
+    <string name="categories_delete_confirm_message">If this category is in use by an existing purchase, the delete will fail and you\'ll see a message.</string>
+    <string name="categories_deleted">Deleted \"%1$s\"</string>
+    <string name="categories_error_in_use">Category is in use by existing purchases</string>
+    <string name="categories_error_delete_failed">Could not delete %1$s</string>
+    <string name="categories_error_reorder_failed">Could not save the new order</string>
+    <string name="categories_drag_handle">Reorder</string>
+    <string name="categories_error_create_failed">Could not create category</string>
+
+    <!-- Category detail (per-category items grid) -->    <string name="category_detail_title">Category</string>
+    <string name="category_detail_items_count">%1$d item(s)</string>
+    <string name="category_detail_empty_title">No items yet</string>
+    <string name="category_detail_empty_body">Add the items that belong to this category — like Tomato, Potato, Chili for Vegetables. They\'ll appear in the purchase entry sheet so you can pick them in a tap.</string>
+    <string name="category_detail_add_item">Add item</string>
+    <string name="category_detail_edit">Edit</string>
+    <string name="category_detail_delete">Delete</string>
+    <string name="category_detail_default">Default</string>
+    <string name="category_detail_uncategorized">Uncategorized</string>
+    <string name="category_detail_item_name_label">Item name</string>
+    <string name="category_detail_item_default_unit_label">Default unit (optional)</string>
+    <string name="category_detail_item_default_unit_placeholder">kg, L, pcs…</string>
+    <string name="category_detail_item_save">Save item</string>
+    <string name="category_detail_item_edit_title">Edit item</string>
+    <string name="category_detail_item_add_title">Add item</string>
+    <string name="category_detail_item_name_required">Item name can\'t be empty</string>
+    <string name="category_detail_item_duplicate">An item with this name already exists</string>
+    <string name="category_detail_item_delete_title">Delete \"%1$s\"?</string>
+    <string name="category_detail_item_delete_message">This removes the item from the catalog. Existing purchases that reference it are unaffected.</string>
+    <string name="category_detail_item_icon_label">Item icon</string>
+    <string name="category_detail_item_icon_picker_title">Pick an icon</string>
+    <string name="category_detail_item_icon_reset">Use category icon</string>
+    <string name="category_detail_overflow">More options</string>
+    <string name="category_detail_edit_category_title">Edit category</string>
+    <string name="category_detail_edit_category_name_label">Category name</string>
+    <string name="category_detail_edit_category_name_required">Category name can\'t be empty</string>
+    <string name="category_detail_edit_category_duplicate">A category with this name already exists</string>
+    <string name="category_detail_delete_category_title">Delete \"%1$s\"?</string>
+    <string name="category_detail_delete_category_message">This removes the category. Items in this category will become uncategorized.</string>
+    <string name="category_detail_add_category_title">New category</string>
+    <string name="category_detail_create">Create</string>
+    <string name="category_detail_delete_selected">Delete selected items</string>
+    <string name="category_detail_delete_selected_title">Delete %1$d items?</string>
+    <string name="category_detail_delete_selected_message">This permanently removes the selected items from this category.</string>
+    <string name="category_detail_selection_count">%1$d selected</string>
+
+    <!-- Shopping list -->
+    <string name="shopping_list_title">Shopping list</string>
+    <string name="shopping_list_to_buy">To buy  ·  %1$d</string>
+    <string name="shopping_list_purchased">Purchased  ·  %1$d</string>
+    <string name="shopping_list_empty_title">Your list is empty</string>
+    <string name="shopping_list_empty_body">Add items to plan your next grocery trip. Check them off when you buy, then convert to a purchase in one tap.</string>
+    <string name="shopping_list_add_title">Add to list</string>
+    <string name="shopping_list_add_body">Capture the next thing on your list. You will see it under "To buy" until you mark it purchased.</string>
+    <string name="shopping_list_item_name">Item name</string>
+    <string name="shopping_list_unit_label">Unit (kg, L)</string>
+    <string name="shopping_list_mark_purchased">Mark purchased</string>
+    <string name="shopping_list_mark_not_purchased">Mark not purchased</string>
+    <string name="shopping_list_remove">Remove</string>
+    <string name="shopping_list_remove_title">Remove %1$s?</string>
+    <string name="shopping_list_remove_message">This item will be deleted from your shopping list.</string>
+    <string name="shopping_list_error_select_one">Select at least one item to convert</string>
+    <string name="shopping_list_error_no_category">Add a category before converting a list to a purchase</string>
+    <string name="shopping_list_error_no_items">No items to convert</string>
+    <string name="shopping_list_error_convert_failed">Could not convert</string>
+
+    <!-- Empty states -->
+    <string name="empty_purchases_title">No purchases yet</string>
+    <string name="empty_purchases_body">Add your first grocery purchase to start tracking monthly spending.</string>
+    <string name="empty_budget_title">No budget set</string>
+    <string name="empty_budget_body">Set a monthly budget to see remaining spend and safe daily limit.</string>
+    <string name="empty_shopping_list_title">Your list is empty</string>
+    <string name="empty_shopping_list_body">Add items to plan your next grocery trip.</string>
+    <string name="empty_records_title">No matching purchases</string>
+    <string name="empty_insights_title">Not enough data yet</string>
+    <string name="empty_insights_body">Insights appear after you log a few purchases.</string>
+
+    <!-- Currency -->
+    <string name="currency_pkr">Pakistani Rupee (PKR)</string>
+    <string name="currency_usd">US Dollar (USD)</string>
+    <string name="currency_eur">Euro (EUR)</string>
+    <string name="currency_gbp">British Pound (GBP)</string>
+    <string name="currency_inr">Indian Rupee (INR)</string>
+    <string name="select_currency_custom_label">Custom</string>
+    <string name="select_currency_custom_title">Enter a currency code</string>
+    <string name="select_currency_custom_hint">e.g. NZD, CHF, BRL, BTC</string>
+    <string name="select_currency_custom_invalid">Enter a 3-letter code</string>
+    <string name="select_currency_custom_description">Use any 3-letter code (ISO 4217 or your own).</string>
+
+    <!-- Support -->
+    <string name="settings_support_title">Support</string>
+    <string name="settings_help_action">Help &amp; support</string>
+    <string name="settings_help_email_subject">Grocery Manager — Help request</string>
+    <string name="settings_help_email_chooser">Send email</string>
+    <string name="settings_help_no_email_app">No email app found on this device</string>
+
+    <!-- Content descriptions -->
+    <string name="cd_add_purchase">Add purchase</string>
+    <string name="cd_delete">Delete</string>
+    <string name="cd_edit">Edit</string>
+    <string name="cd_delete_category">Delete %1$s</string>
+    <string name="cd_remove_item">Remove %1$s</string>
+
+    <!-- Empty-state eyebrow labels — kept; chip-style eyebrow tags were removed app-wide. -->
+    <string name="home_empty_eyebrow">Get started</string>
+    <string name="records_empty_eyebrow">Empty</string>
+    <string name="purchase_detail_notes_eyebrow">Note</string>
+    <string name="shopping_list_empty_eyebrow">Plan ahead</string>
+    <string name="categories_empty_eyebrow">Organize</string>
+</resources>
